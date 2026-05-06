@@ -120,9 +120,9 @@
     align-items: stretch;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    gap: var(--spacing-150, 24px);
-    padding-inline: var(--spacing-300, 48px);
-    scroll-padding-inline: var(--spacing-300, 48px);
+    gap: var(--spacing-100, 16px);
+    padding-inline: var(--spacing-200, 32px);
+    scroll-padding-inline: var(--spacing-200, 32px);
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
@@ -174,8 +174,7 @@
 
   .card__instructions {
     flex-shrink: 0;
-    padding: var(--spacing-100, 16px);
-    /* border-top: 1px solid var(--border-color-subtle, #c8ccd1); */
+    padding: var(--spacing-75, 12px) var(--spacing-100, 16px) var(--spacing-100, 16px);
     background-color: var(--background-color-neutral);
   }
 
@@ -185,8 +184,9 @@
   }
 
   .card__instructions-description {
-    margin: 0 0 var(--spacing-100, 16px);
+    margin: 0 0 var(--spacing-75, 12px);
     color: var(--color-base, #202122);
+    line-height: var(--line-height-small);
   }
 
   .card__instructions-description :deep(a) {
@@ -205,10 +205,7 @@
   }
 
   .card__instructions-header {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-75, 6px);
-    margin-bottom: var(--spacing-75, 6px);
+    margin-bottom: var(--spacing-25, 2px);
   }
 
   .card__instructions-header .card__instructions-title {
