@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, onMounted, onUnmounted } from 'vue'
+  import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 
   definePage({
     meta: {
@@ -16,6 +16,8 @@
   import type { CardData } from './types'
 
   const editViewOpen = ref(false)
+  const editViewCards = ref<CardData[]>([])
+  const cardMapRef = ref(new Map<string, CardData>())
   const containerRef = ref<HTMLElement | null>(null)
 
   const params = new URLSearchParams(window.location.search)
@@ -61,16 +63,32 @@
     )
   }
 
-  function injectHatnotes(root: Element) {
+  function injectHatnotes(root: Element, cardMap: Map<string, CardData>) {
     for (const { selector, text } of HATNOTE_INJECTIONS) {
       const el = root.querySelector(selector)
       if (!el || el.classList.contains('protowiki-hatnote-group')) continue
       const label = text.replace(/^\[/, '').replace(/\]$/, '').replace(/<\/?i>/g, '')
+      const card = cardMap.get(selector)
       const sup = document.createElement('sup')
       sup.className = 'protowiki-hatnote'
       sup.dataset.hatnoteLabel = label
       sup.innerHTML = collapsedHTML(label)
-      sup.addEventListener('click', () => {
+      sup.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement
+        if (target.closest('.protowiki-hatnote__action--yes')) {
+          if (card) {
+            editViewCards.value = [card]
+            editViewOpen.value = true
+          }
+          sup.classList.remove('protowiki-hatnote--expanded')
+          sup.innerHTML = collapsedHTML(label)
+          return
+        }
+        if (target.closest('.protowiki-hatnote__action--no')) {
+          sup.classList.remove('protowiki-hatnote--expanded')
+          sup.innerHTML = collapsedHTML(label)
+          return
+        }
         const expanded = sup.classList.toggle('protowiki-hatnote--expanded')
         sup.innerHTML = expanded ? expandedHTML(label) : collapsedHTML(label)
       })
@@ -253,10 +271,11 @@
     return { type: 'ai-content', previewHTML }
   }
 
-  function buildCards(root: Element): CardData[] {
-    return HATNOTE_INJECTIONS.flatMap(({ selector, text }): CardData[] => {
+  function buildCardMap(root: Element): Map<string, CardData> {
+    const map = new Map<string, CardData>()
+    for (const { selector, text } of HATNOTE_INJECTIONS) {
       const el = root.querySelector(selector)
-      if (!el) return []
+      if (!el) continue
 
       const type: CardData['type'] = text.includes('duplicate')
         ? 'remove-duplicate'
@@ -264,45 +283,60 @@
           ? 'ai-content'
           : 'add-citation'
 
+      let card: CardData | null = null
       if (type === 'remove-duplicate') {
-        const card = buildDuplicateCard(root, el)
-        return card ? [card] : []
+        card = buildDuplicateCard(root, el)
+      } else {
+        const block = getParentBlock(el)
+        if (block) {
+          card = type === 'add-citation'
+            ? buildCitationCard(el, block)
+            : buildAiCard(el, block)
+        }
       }
 
-      const block = getParentBlock(el)
-      if (!block) return []
-
-      const card = type === 'add-citation'
-        ? buildCitationCard(el, block)
-        : buildAiCard(el, block)
-
-      return card ? [card] : []
-    })
+      if (card) map.set(selector, card)
+    }
+    return map
   }
 
   // --- viewport/toast observer ---
 
-  const visibleCount = ref(0)
+  const visibleSelectors = ref(new Set<string>())
+  const visibleCount = computed(() => visibleSelectors.value.size)
   const cards = ref<CardData[]>([])
   let observer: MutationObserver | null = null
   let intersectionObserver: IntersectionObserver | null = null
   let observedTargets: Element[] = []
 
   function startViewportObserver(root: Element) {
-    observedTargets = HATNOTE_INJECTIONS
-      .map(({ selector }) => root.querySelector(selector))
-      .filter(Boolean) as Element[]
-
-    const visible = new Set<Element>()
+    const elementToSelector = new Map<Element, string>()
+    for (const { selector } of HATNOTE_INJECTIONS) {
+      const el = root.querySelector(selector)
+      if (el) elementToSelector.set(el, selector)
+    }
+    observedTargets = [...elementToSelector.keys()]
 
     intersectionObserver = new IntersectionObserver((entries) => {
+      const next = new Set(visibleSelectors.value)
       entries.forEach((e) => {
-        e.isIntersecting ? visible.add(e.target) : visible.delete(e.target)
+        const sel = elementToSelector.get(e.target)
+        if (!sel) return
+        e.isIntersecting ? next.add(sel) : next.delete(sel)
       })
-      visibleCount.value = visible.size
+      visibleSelectors.value = next
     })
 
     observedTargets.forEach((el) => intersectionObserver!.observe(el))
+  }
+
+  function onToastEditClick() {
+    const map = cardMapRef.value
+    const visibleCards = [...visibleSelectors.value]
+      .map(sel => map.get(sel))
+      .filter((c): c is CardData => !!c)
+    editViewCards.value = visibleCards.length ? visibleCards : cards.value
+    editViewOpen.value = true
   }
 
   function tryActivate() {
@@ -311,14 +345,16 @@
     const hasTarget = HATNOTE_INJECTIONS.some(({ selector }) => root.querySelector(selector))
     if (!hasTarget) return false
 
-    cards.value = buildCards(root)
+    const cardMap = buildCardMap(root)
+    cardMapRef.value = cardMap
+    cards.value = [...cardMap.values()]
 
-    if (showHatnotes) injectHatnotes(root)
+    if (showHatnotes) injectHatnotes(root, cardMap)
     if (showHatnoteToast) {
       // Only restart if the observed nodes themselves are stale (detached by v-html re-render)
       if (intersectionObserver && observedTargets[0]?.isConnected) return true
       intersectionObserver?.disconnect()
-      visibleCount.value = 0
+      visibleSelectors.value = new Set()
       startViewportObserver(root)
     }
     return true
@@ -342,14 +378,20 @@
     intersectionObserver?.disconnect()
     observer = null
     intersectionObserver = null
+    document.body.style.overflow = ''
   })
 
   function onArticleClick(e: MouseEvent) {
     const target = e.target as HTMLElement
     if (target.closest('[aria-label="Edit"]')) {
+      editViewCards.value = cards.value
       editViewOpen.value = true
     }
   }
+
+  watch(editViewOpen, (open) => {
+    document.body.style.overflow = open ? 'hidden' : ''
+  })
 </script>
 
 <template>
@@ -364,14 +406,14 @@
     </div>
   </ChromeWrapper>
   <Transition name="edit-view">
-    <EditView v-if="editViewOpen" :cards="cards" @close="editViewOpen = false" />
+    <EditView v-if="editViewOpen" :cards="editViewCards" @close="editViewOpen = false" />
   </Transition>
   <Transition name="hatnote-toast">
     <div v-if="showHatnoteToast && visibleCount > 0" class="protowiki-hatnote-toast">
       <CdxMessage type="progressive">
         <div class="protowiki-hatnote-toast__inner">
           <span><span class="protowiki-hatnote-toast__count">{{ visibleCount }}</span> edit suggestions in this section.</span>
-          <CdxButton action="progressive" weight="primary" size="small">Edit</CdxButton>
+          <CdxButton action="progressive" weight="primary" size="small" @click="onToastEditClick">Edit</CdxButton>
         </div>
       </CdxMessage>
     </div>
