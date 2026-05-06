@@ -75,7 +75,7 @@
   .edit-view {
     position: fixed;
     inset: 0;
-    z-index: 100;
+    z-index: 200;
     display: flex;
     flex-direction: column;
     background-color: var(--background-color-neutral-subtle, #f8f9fa);
