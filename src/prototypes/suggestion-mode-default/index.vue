@@ -75,15 +75,20 @@
         sup.innerHTML = expanded ? expandedHTML(label) : collapsedHTML(label)
       })
       if (BLOCK_TAGS.has(el.tagName)) {
-        el.classList.add('protowiki-hatnote-group')
+        // Wrap content in an inner inline span so box-decoration-break: clone
+        // draws a border around each visual line, not the whole block box.
+        let inner = el.querySelector(':scope > .protowiki-hatnote-group') as HTMLElement | null
+        if (!inner) {
+          inner = document.createElement('span')
+          inner.className = 'protowiki-hatnote-group'
+          while (el.firstChild) inner.appendChild(el.firstChild)
+          el.appendChild(inner)
+        }
         el.appendChild(sup)
       } else {
-        if (el.parentElement?.classList.contains('protowiki-hatnote-group')) continue
-        const wrapper = document.createElement('span')
-        wrapper.className = 'protowiki-hatnote-group'
-        el.parentNode!.insertBefore(wrapper, el)
-        wrapper.appendChild(el)
-        wrapper.appendChild(sup)
+        if (el.classList.contains('protowiki-hatnote-group')) continue
+        el.classList.add('protowiki-hatnote-group')
+        el.parentNode!.insertBefore(sup, el.nextSibling)
       }
     }
   }
@@ -391,13 +396,10 @@
     opacity: 0;
   }
 
-  :deep(.protowiki-hatnote-group),
-  :deep(.protowiki-hatnote-group a) {
-    text-decoration: underline;
-    text-decoration-style: dashed;
-    text-decoration-color: var(--border-color-subtle);
-    text-decoration-thickness: 1px;
-    text-underline-offset: 4px;
+  :deep(.protowiki-hatnote-group) {
+    border: 1px solid var(--border-color-subtle, #c8ccd1);
+    border-radius: 0!important;
+    padding: 0 1px;
   }
 
   :deep(.protowiki-hatnote) {
@@ -407,7 +409,7 @@
   }
 
   :deep(.protowiki-hatnote i) {
-    color: var(--color-warning);
+    color: var(--color-progressive);
   }
 
   :deep(sup.mw-ref > a) {
@@ -419,7 +421,7 @@
   } */
 
   :deep(.protowiki-hatnote__label) {
-    color: var(--color-warning);
+    color: var(--color-progressive);
     font-style: italic;
   }
 
