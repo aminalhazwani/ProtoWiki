@@ -70,20 +70,20 @@
 
     if (citationCount > 0) {
       parts.push(citationCount === 1
-        ? 'one passage may be missing a citation'
+        ? 'a citation is missing'
         : citationCount <= 4
-          ? 'a few passages may be missing citations'
-          : 'several passages may be missing citations')
+          ? 'a few citations are missing'
+          : 'several citations are missing')
     }
     if (aiCount > 0) {
       parts.push(aiCount === 1
-        ? 'one section was flagged as potentially AI-generated'
-        : 'multiple sections were flagged as potentially AI-generated')
+        ? 'one section may need a human review'
+        : 'some sections may need a human review')
     }
     if (duplicateCount > 0) {
       parts.push(duplicateCount === 1
-        ? "there's a duplicate link that could be removed"
-        : 'there are duplicate links that could be removed')
+        ? 'a duplicate link could be cleaned up'
+        : 'some duplicate links could be cleaned up')
     }
 
     if (parts.length === 0) return ''
@@ -101,7 +101,7 @@
     const articleContent = container.querySelector('.article-content')
     if (!articleContent) return
 
-    const count = cardList.length
+    const count = new Set(cardList.map(c => c.type)).size
     const summary = buildSummary(cardList)
     const wrapper = document.createElement('div')
     wrapper.className = 'protowiki-summary'
@@ -116,7 +116,7 @@
           modelValue: isOpen.value,
           'onUpdate:modelValue': (v: boolean) => { isOpen.value = v },
         }, {
-          title: () => h('span', `${count} suggestions`),
+          title: () => h('span', `${count} ways to improve this article`),
           description: views.value ? () => h('span', `${views.value} views in the past 30 days`) : undefined,
           default: () => h('p', summary),
         })
