@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+  import { ref, computed, watch, onMounted, onUnmounted, createApp, defineComponent, h } from 'vue'
 
   definePage({
     meta: {
@@ -339,9 +339,26 @@
     editViewOpen.value = true
   }
 
+  function injectAmboxIcon(root: Element) {
+    const ambox = root.querySelector('.ambox')
+    if (!ambox || ambox.querySelector('.minerva-ambox-icon')) return
+    const mboxText = ambox.querySelector('.mbox-text-span, .mbox-text-div')
+    if (!mboxText) return
+    const learnMore = document.createElement('span')
+    learnMore.className = 'ambox-learn-more'
+    learnMore.textContent = 'Learn more'
+    mboxText.before(learnMore)
+    const icon = document.createElement('div')
+    icon.className = 'minerva-icon--issue-severity-medium-mediumColor minerva-ambox-icon'
+    mboxText.before(icon)
+  }
+
   function tryActivate() {
     const root = containerRef.value?.querySelector('.mw-parser-output')
     if (!root || root.children.length === 0) return false
+
+    injectAmboxIcon(root)
+
     const hasTarget = HATNOTE_INJECTIONS.some(({ selector }) => root.querySelector(selector))
     if (!hasTarget) return false
 
