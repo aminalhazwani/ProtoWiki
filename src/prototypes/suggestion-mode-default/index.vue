@@ -118,7 +118,11 @@
         }, {
           title: () => h('span', `${count} ways to improve this article`),
           description: views.value ? () => h('span', `${views.value} views in the past 30 days`) : undefined,
-          default: () => h('p', summary),
+          default: () => h('div', { class: 'protowiki-summary__body' }, [
+            h('span', { class: 'protowiki-summary__label' }, 'Machine-generated'),
+            h('p', { class: 'protowiki-summary__text' }, summary),
+            h(CdxButton, { onClick: () => { editViewCards.value = cardList; editViewOpen.value = true } }, () => 'Open suggestions'),
+          ]),
         })
       },
     })
@@ -530,8 +534,37 @@
     padding: 0 var(--spacing-100);
   }
 
+  :deep(.protowiki-summary),
+  :deep(.protowiki-summary .cdx-accordion),
+  :deep(.protowiki-summary .cdx-accordion__header__title),
+  :deep(.protowiki-summary .cdx-accordion__header__description),
+  :deep(.protowiki-summary .cdx-accordion__content) {
+    font-family: var(--font-family-system-sans);
+  }
+
   :deep(.protowiki-summary) {
     padding: 0;
+  }
+
+  :deep(.protowiki-summary__body) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  :deep(.protowiki-summary__label) {
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-subtle);
+    line-height: var(--line-height-small);
+  }
+
+  :deep(.protowiki-summary__text) {
+    margin: 0 0 var(--spacing-75);
+    line-height: var(--line-height-small);
+  }
+
+  :deep(.protowiki-summary__body > .cdx-button) {
+    align-self: flex-start;
   }
 
   .edit-view-enter-active {
