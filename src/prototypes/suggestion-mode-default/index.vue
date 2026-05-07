@@ -552,7 +552,7 @@
             <span class="protowiki-improve-card__title">Remove duplicate link</span>
           </div>
           <p class="protowiki-improve-card__description">Help readers navigate more easily by removing repeated links.</p>
-          <CdxButton action="progressive" weight="primary">Remove links</CdxButton>
+          <CdxButton action="progressive" weight="primary" @click="editViewCards = cards.filter(c => c.type === 'remove-duplicate'); editViewOpen = true">Remove links</CdxButton>
         </div>
         <div class="protowiki-improve-card">
           <div class="protowiki-improve-card__header">
@@ -560,7 +560,7 @@
             <span class="protowiki-improve-card__title">Add a citation</span>
           </div>
           <p class="protowiki-improve-card__description">Help readers understand where this information is coming from by adding a citation.</p>
-          <CdxButton action="progressive" weight="primary">Find references</CdxButton>
+          <CdxButton action="progressive" weight="primary" @click="editViewCards = cards.filter(c => c.type === 'add-citation'); editViewOpen = true">Find references</CdxButton>
         </div>
         <div class="protowiki-improve-card">
           <div class="protowiki-improve-card__header">
@@ -568,7 +568,7 @@
             <span class="protowiki-improve-card__title">Potential AI-generated content</span>
           </div>
           <p class="protowiki-improve-card__description">Help readers trust the article by removing any AI content or rewriting any inaccurate, unverifiable, or unencyclopedic information.</p>
-          <CdxButton action="progressive" weight="primary">Review text</CdxButton>
+          <CdxButton action="progressive" weight="primary" @click="editViewCards = cards.filter(c => c.type === 'ai-content'); editViewOpen = true">Review text</CdxButton>
         </div>
       </div>
     </div>
@@ -605,7 +605,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-100, 16px);
-    padding-bottom: var(--spacing-100, 16px);
+    padding-bottom: var(--spacing-200, 32px);
   }
 
   .protowiki-improve-card {
