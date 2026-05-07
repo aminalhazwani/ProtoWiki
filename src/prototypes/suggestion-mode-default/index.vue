@@ -525,6 +525,10 @@
   watch(editViewOpen, (open) => {
     document.body.style.overflow = open ? 'hidden' : ''
   })
+
+  const duplicateCount = computed(() => cards.value.filter(c => c.type === 'remove-duplicate').length)
+  const citationCount = computed(() => cards.value.filter(c => c.type === 'add-citation').length)
+  const aiCount = computed(() => cards.value.filter(c => c.type === 'ai-content').length)
 </script>
 
 <template>
@@ -541,7 +545,32 @@
       @click="onArticleClick"
     >
       <Article title="Alan Kay" />
-      <div v-if="showImprove && improveTabActive" class="protowiki-improve-content" />
+      <div v-if="showImprove && improveTabActive" class="protowiki-improve-content">
+        <div class="protowiki-improve-card">
+          <div class="protowiki-improve-card__header">
+            <span class="protowiki-improve-card__badge">{{ duplicateCount }}</span>
+            <span class="protowiki-improve-card__title">Remove duplicate link</span>
+          </div>
+          <p class="protowiki-improve-card__description">Help readers navigate more easily by removing repeated links.</p>
+          <CdxButton action="progressive" weight="primary">Remove links</CdxButton>
+        </div>
+        <div class="protowiki-improve-card">
+          <div class="protowiki-improve-card__header">
+            <span class="protowiki-improve-card__badge">{{ citationCount }}</span>
+            <span class="protowiki-improve-card__title">Add a citation</span>
+          </div>
+          <p class="protowiki-improve-card__description">Help readers understand where this information is coming from by adding a citation.</p>
+          <CdxButton action="progressive" weight="primary">Find references</CdxButton>
+        </div>
+        <div class="protowiki-improve-card">
+          <div class="protowiki-improve-card__header">
+            <span class="protowiki-improve-card__badge">{{ aiCount }}</span>
+            <span class="protowiki-improve-card__title">Potential AI-generated content</span>
+          </div>
+          <p class="protowiki-improve-card__description">Help readers trust the article by removing any AI content or rewriting any inaccurate, unverifiable, or unencyclopedic information.</p>
+          <CdxButton action="progressive" weight="primary">Review text</CdxButton>
+        </div>
+      </div>
     </div>
   </ChromeWrapper>
   <Transition name="edit-view">
@@ -573,12 +602,68 @@
   }
 
   .protowiki-improve-content {
-    padding: var(--spacing-100);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-100, 16px);
+    padding-bottom: var(--spacing-100, 16px);
+  }
+
+  .protowiki-improve-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-75);
+    background-color: var(--background-color-base, #fff);
+    border: 1px solid var(--border-color-subtle, #c8ccd1);
+    border-radius: var(--border-radius-base, 2px);
+  }
+
+  .protowiki-improve-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-50, 8px);
+    margin-bottom: var(--spacing-25, 4px);
+  }
+
+  .protowiki-improve-card__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 4px;
+    border-radius: var(--border-radius-circle, 9999px);
+    background-color: var(--background-color-neutral, #eaecf0);
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-base);
+    flex-shrink: 0;
+  }
+
+  .protowiki-improve-card__title {
+    font-size: var(--font-size-medium);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-base);
+    line-height: var(--line-height-small);
+  }
+
+  .protowiki-improve-card__description {
+    margin: 0 0 var(--spacing-75, 12px);
+    padding-left: var(--spacing-200);
+    font-size: var(--font-size-medium);
+    font-weight: var(--font-weight-normal);
+    color: var(--color-subtle);
+    line-height: var(--line-height-medium);
+  }
+
+  .protowiki-improve-card .cdx-button {
+    margin-left: var(--spacing-200);
+    align-self: flex-start;
   }
 
   :deep(.protowiki-improve-tab) {
     display: inline-flex;
     align-items: center;
+    gap: var(--spacing-25, 4px);
     padding: var(--spacing-50, 8px) var(--spacing-12, 1px);
     margin: 0;
     color: var(--color-subtle);
@@ -586,6 +671,18 @@
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
     font-weight: 700;
+  }
+
+  :deep(.protowiki-improve-tab::before) {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-image: url('https://upload.wikimedia.org/wikipedia/en/e/e6/Symbol_c_class.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    flex-shrink: 0;
   }
 
   /* Deactivate Article/Talk tabs visually when Improve is active */
