@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ref, computed, onUnmounted } from 'vue'
   import { CdxButton, CdxIcon } from '@wikimedia/codex'
-  import { cdxIconClose, cdxIconEdit, cdxIconEllipsis, cdxIconSuccess } from '@wikimedia/codex-icons'
+  import { cdxIconClose, cdxIconEdit, cdxIconEllipsis, cdxIconSuccess, cdxIconUndo } from '@wikimedia/codex-icons'
   import type { CardData } from './types'
 
   const props = defineProps<{ cards: CardData[] }>()
@@ -12,6 +12,12 @@
 
   function onRemoveLink(i: number) {
     removedIndices.value = new Set([...removedIndices.value, i])
+  }
+
+  function onUndoRemove(i: number) {
+    const next = new Set(removedIndices.value)
+    next.delete(i)
+    removedIndices.value = next
   }
 
   const bottomHeights = ref<number[]>([])
@@ -109,6 +115,9 @@
               <div v-else key="message" class="card__message">
                 <CdxIcon :icon="cdxIconSuccess" class="card__message-icon" />
                 <span class="card__message-label">Remove duplicate link</span>
+                <CdxButton weight="quiet" size="small" class="card__message-undo" aria-label="Undo" @click="onUndoRemove(i)">
+                  <CdxIcon :icon="cdxIconUndo" />
+                </CdxButton>
               </div>
             </Transition>
           </div>
@@ -299,6 +308,12 @@
 
   .card__message-label {
     font-weight: var(--font-weight-bold, 700);
+    flex: 1;
+  }
+
+  .card__message-undo {
+    color: var(--color-neutral);
+    margin-inline-start: auto;
   }
 
   .card-confirm-enter-active {
