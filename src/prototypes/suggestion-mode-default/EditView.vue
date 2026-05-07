@@ -1,10 +1,30 @@
 <script setup lang="ts">
+  import { ref, computed } from 'vue'
   import { CdxButton, CdxIcon } from '@wikimedia/codex'
-  import { cdxIconClose, cdxIconEdit, cdxIconEllipsis } from '@wikimedia/codex-icons'
+  import { cdxIconClose, cdxIconEdit, cdxIconEllipsis, cdxIconSuccess } from '@wikimedia/codex-icons'
   import type { CardData } from './types'
 
   const props = defineProps<{ cards: CardData[] }>()
   const emit = defineEmits<{ close: [] }>()
+
+  const removedIndices = ref(new Set<number>())
+  const anyRemoved = computed(() => removedIndices.value.size > 0)
+
+  function onRemoveLink(i: number) {
+    removedIndices.value = new Set([...removedIndices.value, i])
+  }
+
+  function resolvePreviewHTML(html: string): string {
+    const div = document.createElement('div')
+    div.innerHTML = html
+    div.querySelectorAll('a.card__preview-duplicate').forEach(a => {
+      a.replaceWith(document.createTextNode(a.textContent ?? ''))
+    })
+    div.querySelectorAll('.card__preview-duplicate').forEach(el => {
+      el.classList.remove('card__preview-duplicate')
+    })
+    return div.innerHTML
+  }
 
   function titleFor(type: CardData['type']): string {
     return {
@@ -43,26 +63,55 @@
     <div class="edit-view__body">
       <div class="edit-view__carousel">
         <div v-for="(card, i) in cards" :key="i" class="edit-view__card">
-          <div class="card__preview" v-html="card.previewHTML" />
-          <div class="card__instructions">
-            <div class="card__instructions-header">
-              <p class="card__instructions-title">{{ titleFor(card.type) }}</p>
-            </div>
-            <!-- eslint-disable-next-line vue/no-v-html -->
-            <p class="card__instructions-description" v-html="descriptionFor(card.type)" />
-            <div class="card__actions">
-              <CdxButton v-for="action in actionsFor(card.type)" :key="action.label">
-                {{ action.label }}
-              </CdxButton>
-              <CdxButton weight="quiet" aria-label="More options" class="card__actions-more">
-                <CdxIcon :icon="cdxIconEllipsis" />
-              </CdxButton>
-            </div>
+          <div
+            class="card__preview"
+            v-html="removedIndices.has(i) ? resolvePreviewHTML(card.previewHTML) : card.previewHTML"
+          />
+          <div class="card__bottom">
+            <Transition name="card-confirm" mode="out-in">
+              <div v-if="!removedIndices.has(i)" key="instructions" class="card__instructions">
+                <div class="card__instructions-header">
+                  <p class="card__instructions-title">{{ titleFor(card.type) }}</p>
+                </div>
+                <!-- eslint-disable-next-line vue/no-v-html -->
+                <p class="card__instructions-description" v-html="descriptionFor(card.type)" />
+                <div class="card__actions">
+                  <template v-for="action in actionsFor(card.type)" :key="action.label">
+                    <CdxButton
+                      v-if="card.type === 'remove-duplicate' && action.label === 'Remove link'"
+                      @click="onRemoveLink(i)"
+                    >
+                      {{ action.label }}
+                    </CdxButton>
+                    <CdxButton v-else>{{ action.label }}</CdxButton>
+                  </template>
+                  <CdxButton weight="quiet" aria-label="More options" class="card__actions-more">
+                    <CdxIcon :icon="cdxIconEllipsis" />
+                  </CdxButton>
+                </div>
+              </div>
+              <div v-else key="message" class="card__message">
+                <CdxIcon :icon="cdxIconSuccess" class="card__message-icon" />
+                <span class="card__message-label">Remove duplicate link</span>
+              </div>
+            </Transition>
           </div>
         </div>
       </div>
     </div>
     <footer class="edit-view__footer">
+      <Transition name="card-confirm">
+        <CdxButton
+          v-if="anyRemoved"
+          key="publish"
+          action="progressive"
+          weight="primary"
+          size="large"
+          class="edit-view__publish-button"
+        >
+          Publish
+        </CdxButton>
+      </Transition>
       <CdxButton weight="quiet" size="large">
         <CdxIcon :icon="cdxIconEdit" />
         Edit full article
@@ -172,8 +221,12 @@
     margin: 0 0 var(--spacing-100, 16px);
   }
 
-  .card__instructions {
+  .card__bottom {
     flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .card__instructions {
     padding: var(--spacing-75, 12px) var(--spacing-100, 16px) var(--spacing-100, 16px);
     background-color: var(--background-color-neutral);
   }
@@ -212,9 +265,58 @@
     margin: 0;
   }
 
+  .card__message {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-75, 12px);
+    padding: var(--spacing-100, 16px);
+    background-color: var(--background-color-success-subtle);
+    color: var(--color-success);
+  }
+
+  .card__message-icon {
+    color: var(--color-icon-success);
+  }
+
+  .card__message-label {
+    font-weight: var(--font-weight-bold, 700);
+  }
+
+  .card-confirm-enter-active {
+    transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .card-confirm-leave-active {
+    transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .card-confirm-enter-from,
+  .card-confirm-leave-to {
+    transform: translateY(100%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-confirm-enter-active,
+    .card-confirm-leave-active {
+      transition: opacity 200ms ease;
+      transform: none;
+    }
+
+    .card-confirm-enter-from,
+    .card-confirm-leave-to {
+      opacity: 0;
+    }
+  }
+
   .edit-view__footer {
     display: flex;
-    justify-content: center;
-    padding: var(--spacing-100, 16px);
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-75, 12px);
+    padding: var(--spacing-200, 32px);
+  }
+
+  .edit-view__publish-button {
+    width: 100%;
   }
 </style>
