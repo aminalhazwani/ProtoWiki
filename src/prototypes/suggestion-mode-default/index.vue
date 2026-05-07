@@ -8,7 +8,7 @@
     },
   })
 
-  import { CdxButton, CdxIcon, CdxMessage } from '@wikimedia/codex'
+  import { CdxButton, CdxIcon, CdxMessage, CdxAccordion } from '@wikimedia/codex'
   import { cdxIconUserAvatarOutline } from '@wikimedia/codex-icons'
   import Article from '@/components/Article.vue'
   import ChromeWrapper from '@/components/ChromeWrapper.vue'
@@ -23,6 +23,7 @@
   const params = new URLSearchParams(window.location.search)
   const showHatnotes = params.get('hatnotes') === '1'
   const showHatnoteToast = params.get('toast') === '1'
+  const showSummary = params.get('summary') === '1'
 
   const HATNOTE_INJECTIONS: { selector: string; text: string }[] = [
     { selector: '#mwFw', text: '[<i>remove duplicate link?</i>]' },
@@ -42,6 +43,89 @@
     { selector: '#mw7w', text: '[<i>add a citation?</i>]' },
     { selector: '#mwAVY', text: '[<i>add a citation?</i>]' },
   ]
+
+  // --- summary accordion injection ---
+
+  let summaryApp: ReturnType<typeof createApp> | null = null
+
+  async function fetchPageviews(title: string): Promise<string> {
+    const end = new Date()
+    end.setDate(end.getDate() - 1)
+    const start = new Date(end)
+    start.setDate(start.getDate() - 29)
+    const fmt = (d: Date) => d.toISOString().slice(0, 10).replace(/-/g, '')
+    const url = `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/${encodeURIComponent(title)}/daily/${fmt(start)}/${fmt(end)}`
+    const res = await fetch(url)
+    const data = await res.json()
+    const total: number = (data.items as { views: number }[]).reduce((sum, item) => sum + item.views, 0)
+    return total.toLocaleString()
+  }
+
+  function buildSummary(cardList: CardData[]): string {
+    const citationCount = cardList.filter(c => c.type === 'add-citation').length
+    const aiCount = cardList.filter(c => c.type === 'ai-content').length
+    const duplicateCount = cardList.filter(c => c.type === 'remove-duplicate').length
+
+    const parts: string[] = []
+
+    if (citationCount > 0) {
+      parts.push(citationCount === 1
+        ? 'one passage may be missing a citation'
+        : citationCount <= 4
+          ? 'a few passages may be missing citations'
+          : 'several passages may be missing citations')
+    }
+    if (aiCount > 0) {
+      parts.push(aiCount === 1
+        ? 'one section was flagged as potentially AI-generated'
+        : 'multiple sections were flagged as potentially AI-generated')
+    }
+    if (duplicateCount > 0) {
+      parts.push(duplicateCount === 1
+        ? "there's a duplicate link that could be removed"
+        : 'there are duplicate links that could be removed')
+    }
+
+    if (parts.length === 0) return ''
+    const [first, ...rest] = parts
+    const lead = first[0].toUpperCase() + first.slice(1)
+    if (rest.length === 0) return `${lead}.`
+    const last = rest.pop()!
+    return rest.length > 0
+      ? `${lead}, ${rest.join(', ')}, and ${last}.`
+      : `${lead}, and ${last}.`
+  }
+
+  function injectSummaryAccordion(container: HTMLElement, cardList: CardData[]) {
+    if (container.querySelector('.protowiki-summary')) return
+    const articleContent = container.querySelector('.article-content')
+    if (!articleContent) return
+
+    const count = cardList.length
+    const summary = buildSummary(cardList)
+    const wrapper = document.createElement('div')
+    wrapper.className = 'protowiki-summary'
+    articleContent.before(wrapper)
+
+    const SummaryAccordion = defineComponent({
+      setup() {
+        const isOpen = ref(false)
+        const views = ref<string | null>(null)
+        fetchPageviews('Alan Kay').then(v => { views.value = v })
+        return () => h(CdxAccordion, {
+          modelValue: isOpen.value,
+          'onUpdate:modelValue': (v: boolean) => { isOpen.value = v },
+        }, {
+          title: () => h('span', `${count} suggestions`),
+          description: views.value ? () => h('span', `${views.value} views in the past 30 days`) : undefined,
+          default: () => h('p', summary),
+        })
+      },
+    })
+
+    summaryApp = createApp(SummaryAccordion)
+    summaryApp.mount(wrapper)
+  }
 
   const BLOCK_TAGS = new Set(['P', 'DIV', 'SECTION', 'BLOCKQUOTE', 'LI'])
   const PREVIEW_BLOCK_TAGS = new Set([...BLOCK_TAGS, 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'])
@@ -66,7 +150,7 @@
   function injectHatnotes(root: Element, cardMap: Map<string, CardData>) {
     for (const { selector, text } of HATNOTE_INJECTIONS) {
       const el = root.querySelector(selector)
-      if (!el || el.classList.contains('protowiki-hatnote-group')) continue
+      if (!el || el.classList.contains('protowiki-hatnote-group') || el.hasAttribute('data-hatnote-injected')) continue
       const label = text.replace(/^\[/, '').replace(/\]$/, '').replace(/<\/?i>/g, '')
       const card = cardMap.get(selector)
       const sup = document.createElement('sup')
@@ -102,6 +186,7 @@
           while (el.firstChild) inner.appendChild(el.firstChild)
           el.appendChild(inner)
         }
+        el.dataset.hatnoteInjected = '1'
         el.appendChild(sup)
       } else {
         if (el.classList.contains('protowiki-hatnote-group')) continue
@@ -366,6 +451,7 @@
     cardMapRef.value = cardMap
     cards.value = [...cardMap.values()]
 
+    if (showSummary) injectSummaryAccordion(containerRef.value!, cards.value)
     if (showHatnotes) injectHatnotes(root, cardMap)
     if (showHatnoteToast) {
       // Only restart if the observed nodes themselves are stale (detached by v-html re-render)
@@ -393,8 +479,10 @@
   onUnmounted(() => {
     observer?.disconnect()
     intersectionObserver?.disconnect()
+    summaryApp?.unmount()
     observer = null
     intersectionObserver = null
+    summaryApp = null
     document.body.style.overflow = ''
   })
 
@@ -440,6 +528,10 @@
 <style scoped>
   .article-container {
     padding: 0 var(--spacing-100);
+  }
+
+  :deep(.protowiki-summary) {
+    padding: 0;
   }
 
   .edit-view-enter-active {
