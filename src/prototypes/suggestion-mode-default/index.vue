@@ -24,6 +24,9 @@
   const showHatnotes = params.get('hatnotes') === '1'
   const showHatnoteToast = params.get('toast') === '1'
   const showSummary = params.get('summary') === '1'
+  const showImprove = params.get('improve') === '1'
+
+  const improveTabActive = ref(false)
 
   const HATNOTE_INJECTIONS: { selector: string; text: string }[] = [
     { selector: '#mwFw', text: '[<i>remove duplicate link?</i>]' },
@@ -442,6 +445,25 @@
     mboxText.before(icon)
   }
 
+  function injectImproveTab() {
+    const nav = containerRef.value?.querySelector('.article-header__tabs')
+    if (!nav || nav.querySelector('.protowiki-improve-tab')) return
+
+    nav.querySelectorAll('.article-header__tab').forEach(el => {
+      el.addEventListener('click', () => { improveTabActive.value = false })
+    })
+
+    const tab = document.createElement('a')
+    tab.href = '#'
+    tab.className = 'article-header__tab protowiki-improve-tab'
+    tab.textContent = 'Improve'
+    tab.addEventListener('click', (e) => {
+      e.preventDefault()
+      improveTabActive.value = true
+    })
+    nav.appendChild(tab)
+  }
+
   function tryActivate() {
     const root = containerRef.value?.querySelector('.mw-parser-output')
     if (!root || root.children.length === 0) return false
@@ -470,8 +492,10 @@
   onMounted(() => {
     if (!containerRef.value) return
     tryActivate()
+    if (showImprove) injectImproveTab()
     observer = new MutationObserver(() => {
       const activated = tryActivate()
+      if (showImprove) injectImproveTab()
       if (activated && !showHatnoteToast) {
         observer?.disconnect()
         observer = null
@@ -510,8 +534,14 @@
         <CdxIcon :icon="cdxIconUserAvatarOutline" />
       </CdxButton>
     </template>
-    <div ref="containerRef" class="article-container" @click="onArticleClick">
+    <div
+      ref="containerRef"
+      class="article-container"
+      :class="{ 'protowiki-improve-active': showImprove && improveTabActive }"
+      @click="onArticleClick"
+    >
       <Article title="Alan Kay" />
+      <div v-if="showImprove && improveTabActive" class="protowiki-improve-content" />
     </div>
   </ChromeWrapper>
   <Transition name="edit-view">
@@ -532,6 +562,44 @@
 <style scoped>
   .article-container {
     padding: 0 var(--spacing-100);
+  }
+
+  .protowiki-improve-active :deep(.article-content) {
+    display: none;
+  }
+
+  .protowiki-improve-active :deep(.protowiki-summary) {
+    display: none;
+  }
+
+  .protowiki-improve-content {
+    padding: var(--spacing-100);
+  }
+
+  :deep(.protowiki-improve-tab) {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-50, 8px) var(--spacing-12, 1px);
+    margin: 0;
+    color: var(--color-subtle);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    font-weight: 700;
+  }
+
+  /* Deactivate Article/Talk tabs visually when Improve is active */
+  .protowiki-improve-active :deep(.article-header__tab--active:not(.protowiki-improve-tab)) {
+    color: var(--color-subtle);
+    font-weight: 700;
+    border-bottom-color: transparent;
+  }
+
+  /* Apply active styles to the injected Improve tab */
+  .protowiki-improve-active :deep(.protowiki-improve-tab) {
+    color: var(--color-subtle);
+    font-weight: var(--font-weight-bold);
+    border-bottom-color: var(--color-subtle);
   }
 
   :deep(.protowiki-summary),

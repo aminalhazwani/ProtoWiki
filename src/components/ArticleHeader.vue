@@ -515,6 +515,7 @@ function onLanguagePick(row: ArticleLanguageLink) {
 .article-header[data-skin='mobile'] .article-header__tab {
   margin-bottom: -1px;
   color: var(--color-subtle);
+  font-weight: var(--font-weight-bold);
 }
 
 .article-header[data-skin='mobile'] .article-header__tab:hover {
