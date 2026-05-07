@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, computed } from 'vue'
+  import { ref, computed, onUnmounted } from 'vue'
   import { CdxButton, CdxIcon } from '@wikimedia/codex'
   import { cdxIconClose, cdxIconEdit, cdxIconEllipsis, cdxIconSuccess } from '@wikimedia/codex-icons'
   import type { CardData } from './types'
@@ -13,6 +13,21 @@
   function onRemoveLink(i: number) {
     removedIndices.value = new Set([...removedIndices.value, i])
   }
+
+  const bottomHeights = ref<number[]>([])
+  const resizeObservers: ResizeObserver[] = []
+
+  function registerBottomEl(el: Element | null, i: number) {
+    if (!(el instanceof HTMLElement)) return
+    resizeObservers[i]?.disconnect()
+    const ro = new ResizeObserver(() => {
+      bottomHeights.value = Object.assign([...bottomHeights.value], { [i]: el.offsetHeight })
+    })
+    ro.observe(el)
+    resizeObservers[i] = ro
+  }
+
+  onUnmounted(() => resizeObservers.forEach(ro => ro.disconnect()))
 
   function resolvePreviewHTML(html: string): string {
     const div = document.createElement('div')
@@ -65,9 +80,10 @@
         <div v-for="(card, i) in cards" :key="i" class="edit-view__card">
           <div
             class="card__preview"
+            :style="{ paddingBottom: `calc(${bottomHeights[i] ?? 0}px + var(--spacing-100, 16px))` }"
             v-html="removedIndices.has(i) ? resolvePreviewHTML(card.previewHTML) : card.previewHTML"
           />
-          <div class="card__bottom">
+          <div class="card__bottom" :ref="(el) => registerBottomEl(el as Element | null, i)">
             <Transition name="card-confirm" mode="out-in">
               <div v-if="!removedIndices.has(i)" key="instructions" class="card__instructions">
                 <div class="card__instructions-header">
@@ -185,13 +201,13 @@
     width: 100%;
     scroll-snap-align: center;
     background-color: var(--background-color-base, #fff);
-    display: flex;
-    flex-direction: column;
+    position: relative;
     overflow: hidden;
   }
 
   .card__preview {
-    flex: 1;
+    position: absolute;
+    inset: 0;
     overflow-y: auto;
     padding: var(--spacing-100, 16px);
     font-size: var(--font-size-medium, 1rem);
@@ -222,7 +238,10 @@
   }
 
   .card__bottom {
-    flex-shrink: 0;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
     overflow: hidden;
   }
 
@@ -268,7 +287,7 @@
   .card__message {
     display: flex;
     align-items: center;
-    gap: var(--spacing-75, 12px);
+    gap: var(--spacing-50, 8px);
     padding: var(--spacing-100, 16px);
     background-color: var(--background-color-success-subtle);
     color: var(--color-success);
@@ -287,7 +306,7 @@
   }
 
   .card-confirm-leave-active {
-    transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+    transition: transform 320ms cubic-bezier(0.23, 1, 0.32, 1);
   }
 
   .card-confirm-enter-from,
