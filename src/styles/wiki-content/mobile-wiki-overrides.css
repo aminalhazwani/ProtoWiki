@@ -13,7 +13,7 @@
 .article-content[data-skin='mobile'] .mw-parser-output div.hatnote {
   box-sizing: border-box;
   margin-top: 0;
-  margin-bottom: var(--spacing-50, 8px) !important;
+  margin-bottom: 0 !important;
   padding: var(--spacing-50, 8px) var(--spacing-100, 16px) !important;
   border-top: none;
   border-bottom: 1px solid var(--border-color-muted, var(--border-color-subtle));
