@@ -637,8 +637,7 @@
         <div class="protowiki-improve-banner">
           <p class="protowiki-improve-banner__title">Machine-generated</p>
           <p class="protowiki-improve-banner__body">
-            This article is <strong>C-class</strong> due to gaps in verifiability
-            and accessibility. Addressing the suggestions below could bring it to B-class.
+            This <a href="https://en.wikipedia.org/wiki/Wikipedia:Vital_articles/Level_5">level-5 vital article</a> is <strong>C-class</strong> - useful to casual readers but not complete enough for detailed study. Adding citations and fixing accessibility issues could meet <a href="https://en.wikipedia.org/wiki/Wikipedia:Content_assessment#Grades">B-class standards</a>.
           </p>
         </div>
         <!-- Verifiability -->
@@ -726,6 +725,10 @@
 <style scoped>
   .article-container {
     padding: 0 var(--spacing-100);
+  }
+
+  .protowiki-improve-active :deep(.article-header__icon-toolbar) {
+    display: none;
   }
 
   .protowiki-improve-active :deep(.article-content) {
