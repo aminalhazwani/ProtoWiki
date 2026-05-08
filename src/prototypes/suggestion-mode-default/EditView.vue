@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, computed } from 'vue'
+  import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
   import { CdxButton, CdxIcon } from '@wikimedia/codex'
   import { cdxIconClose, cdxIconEdit, cdxIconEllipsis, cdxIconSuccess, cdxIconUndo } from '@wikimedia/codex-icons'
   import type { CardData } from './types'
@@ -19,6 +19,41 @@
     next.delete(i)
     removedIndices.value = next
   }
+
+  const bottomHeights = ref<number[]>([])
+  const resizeObservers: ResizeObserver[] = []
+  let rafId: number | null = null
+  const pendingHeights: number[] = []
+
+  function scheduleHeightUpdate() {
+    if (rafId !== null) return
+    rafId = requestAnimationFrame(() => {
+      bottomHeights.value = [...pendingHeights]
+      rafId = null
+    })
+  }
+
+  onMounted(async () => {
+    await nextTick()
+    const carousel = document.querySelector<HTMLElement>('.edit-view__carousel')
+    const bottoms = Array.from(carousel?.querySelectorAll<HTMLElement>('.card__bottom') ?? [])
+    pendingHeights.length = 0
+    bottoms.forEach((el, i) => {
+      pendingHeights[i] = el.offsetHeight
+      const ro = new ResizeObserver(() => {
+        pendingHeights[i] = el.offsetHeight
+        scheduleHeightUpdate()
+      })
+      ro.observe(el)
+      resizeObservers[i] = ro
+    })
+    scheduleHeightUpdate()
+  })
+
+  onUnmounted(() => {
+    resizeObservers.forEach(ro => ro.disconnect())
+    if (rafId !== null) cancelAnimationFrame(rafId)
+  })
 
 
   function resolvePreviewHTML(html: string): string {
@@ -72,6 +107,7 @@
         <div v-for="(card, i) in cards" :key="i" class="edit-view__card">
           <div
             class="card__preview"
+            :style="{ paddingBottom: `calc(${bottomHeights[i] ?? 0}px + var(--spacing-100, 16px))` }"
             v-html="removedIndices.has(i) ? resolvePreviewHTML(card.previewHTML) : card.previewHTML"
           />
           <div class="card__bottom">
@@ -195,14 +231,13 @@
     width: 100%;
     scroll-snap-align: center;
     background-color: var(--background-color-base, #fff);
-    display: flex;
-    flex-direction: column;
+    position: relative;
     overflow: hidden;
   }
 
   .card__preview {
-    flex: 1;
-    min-height: 0;
+    position: absolute;
+    inset: 0;
     overflow-y: auto;
     padding: var(--spacing-100, 16px);
     font-size: var(--font-size-medium, 1rem);
@@ -233,7 +268,10 @@
   }
 
   .card__bottom {
-    flex-shrink: 0;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
     overflow: hidden;
   }
 
@@ -300,11 +338,11 @@
   }
 
   .card-confirm-enter-active {
-    transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    transition: transform 350ms cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   .card-confirm-leave-active {
-    transition: transform 320ms cubic-bezier(0.23, 1, 0.32, 1);
+    transition: transform 450ms cubic-bezier(0.23, 1, 0.32, 1);
   }
 
   .card-confirm-enter-from,
@@ -330,7 +368,7 @@
     flex-direction: column;
     align-items: center;
     gap: var(--spacing-75, 12px);
-    padding: var(--spacing-200, 32px);
+    padding: var(--spacing-100, 16px);
   }
 
   .edit-view__publish-button {

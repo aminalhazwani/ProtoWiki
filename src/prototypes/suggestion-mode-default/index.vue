@@ -65,6 +65,32 @@
     return total.toLocaleString()
   }
 
+  async function fetchEditStats(title: string): Promise<{ edits: number; authors: number }> {
+    const end = new Date()
+    end.setDate(end.getDate() - 1)
+    const start = new Date(end)
+    start.setDate(start.getDate() - 29)
+    const fmt = (d: Date) => d.toISOString().slice(0, 19) + 'Z'
+    const params = new URLSearchParams({
+      action: 'query',
+      prop: 'revisions',
+      titles: title,
+      rvprop: 'user',
+      rvlimit: '500',
+      rvstart: fmt(end),
+      rvend: fmt(start),
+      rvdir: 'older',
+      format: 'json',
+      origin: '*',
+    })
+    const res = await fetch(`https://en.wikipedia.org/w/api.php?${params}`)
+    const data = await res.json()
+    const pages = data.query?.pages ?? {}
+    const revisions: { user: string }[] = (Object.values(pages)[0] as { revisions?: { user: string }[] })?.revisions ?? []
+    const authors = new Set(revisions.map((r) => r.user)).size
+    return { edits: revisions.length, authors }
+  }
+
   function buildSummary(cardList: CardData[]): string {
     const citationCount = cardList.filter(c => c.type === 'add-citation').length
     const aiCount = cardList.filter(c => c.type === 'ai-content').length
@@ -115,13 +141,27 @@
       setup() {
         const isOpen = ref(false)
         const views = ref<string | null>(null)
-        fetchPageviews('Alan Kay').then(v => { views.value = v })
+        const editStats = ref<{ edits: number; authors: number } | null>(null)
+        Promise.all([
+          fetchPageviews('Alan Kay'),
+          fetchEditStats('Alan_Kay'),
+        ]).then(([v, s]) => {
+          views.value = v
+          editStats.value = s
+        })
         return () => h(CdxAccordion, {
           modelValue: isOpen.value,
           'onUpdate:modelValue': (v: boolean) => { isOpen.value = v },
         }, {
           title: () => h('span', `${count} ways to improve this article`),
-          description: views.value ? () => h('span', `${views.value} views in the past 30 days`) : undefined,
+          description: (views.value && editStats.value)
+            ? () => {
+                const { edits, authors } = editStats.value!
+                const editLabel = edits === 1 ? 'edit' : 'edits'
+                const authorLabel = authors === 1 ? 'author' : 'authors'
+                return h('span', `${edits} ${editLabel} by ${authors} ${authorLabel} and ${views.value} views in the past 30 days`)
+              }
+            : undefined,
           default: () => h('div', { class: 'protowiki-summary__body' }, [
             h('span', { class: 'protowiki-summary__label' }, 'Machine-generated'),
             h('p', { class: 'protowiki-summary__text' }, summary),
