@@ -629,7 +629,7 @@
       <CdxMessage type="progressive">
         <div class="protowiki-hatnote-toast__inner">
           <span><span class="protowiki-hatnote-toast__count">{{ visibleCount }}</span> edit suggestions in this section.</span>
-          <CdxButton action="progressive" weight="primary" size="small" @click="onToastEditClick">Edit</CdxButton>
+          <CdxButton action="progressive" weight="primary" size="small" @click="onToastEditClick">Open</CdxButton>
         </div>
       </CdxMessage>
     </div>
