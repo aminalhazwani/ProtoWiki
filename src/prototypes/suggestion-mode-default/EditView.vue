@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, computed, onUnmounted } from 'vue'
+  import { ref, computed } from 'vue'
   import { CdxButton, CdxIcon } from '@wikimedia/codex'
   import { cdxIconClose, cdxIconEdit, cdxIconEllipsis, cdxIconSuccess, cdxIconUndo } from '@wikimedia/codex-icons'
   import type { CardData } from './types'
@@ -20,20 +20,6 @@
     removedIndices.value = next
   }
 
-  const bottomHeights = ref<number[]>([])
-  const resizeObservers: ResizeObserver[] = []
-
-  function registerBottomEl(el: Element | null, i: number) {
-    if (!(el instanceof HTMLElement)) return
-    resizeObservers[i]?.disconnect()
-    const ro = new ResizeObserver(() => {
-      bottomHeights.value = Object.assign([...bottomHeights.value], { [i]: el.offsetHeight })
-    })
-    ro.observe(el)
-    resizeObservers[i] = ro
-  }
-
-  onUnmounted(() => resizeObservers.forEach(ro => ro.disconnect()))
 
   function resolvePreviewHTML(html: string): string {
     const div = document.createElement('div')
@@ -86,10 +72,9 @@
         <div v-for="(card, i) in cards" :key="i" class="edit-view__card">
           <div
             class="card__preview"
-            :style="{ paddingBottom: `calc(${bottomHeights[i] ?? 0}px + var(--spacing-100, 16px))` }"
             v-html="removedIndices.has(i) ? resolvePreviewHTML(card.previewHTML) : card.previewHTML"
           />
-          <div class="card__bottom" :ref="(el) => registerBottomEl(el as Element | null, i)">
+          <div class="card__bottom">
             <Transition name="card-confirm" mode="out-in">
               <div v-if="!removedIndices.has(i)" key="instructions" class="card__instructions">
                 <div class="card__instructions-header">
@@ -210,13 +195,14 @@
     width: 100%;
     scroll-snap-align: center;
     background-color: var(--background-color-base, #fff);
-    position: relative;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
   }
 
   .card__preview {
-    position: absolute;
-    inset: 0;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: var(--spacing-100, 16px);
     font-size: var(--font-size-medium, 1rem);
@@ -247,10 +233,7 @@
   }
 
   .card__bottom {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    flex-shrink: 0;
     overflow: hidden;
   }
 

@@ -19,6 +19,7 @@
   const editViewCards = ref<CardData[]>([])
   const cardMapRef = ref(new Map<string, CardData>())
   const containerRef = ref<HTMLElement | null>(null)
+  const snapshotHtml = ref<string | undefined>(undefined)
 
   const params = new URLSearchParams(window.location.search)
   const showHatnotes = params.get('hatnotes') === '1'
@@ -29,22 +30,22 @@
   const improveTabActive = ref(false)
 
   const HATNOTE_INJECTIONS: { selector: string; text: string }[] = [
-    { selector: '#mwFw', text: '[<i>remove duplicate link?</i>]' },
-    { selector: '#mwKA', text: '[<i>add a citation?</i>]' },
-    { selector: '#mwLw', text: '[<i>add a citation?</i>]' },
-    { selector: '#mwMw', text: '[<i>add a citation?</i>]' },
-    { selector: '#mwOA', text: '[<i>add a citation?</i>]' },
-    { selector: '#mwPQ', text: '[<i>add a citation?</i>]' },
-    { selector: '#mwbA', text: '[<i>add a citation?</i>]' },
-    { selector: '#mwfA', text: '[<i>potential AI-generated content?</i>]' },
-    { selector: '#mwnQ', text: '[<i>add a citation?</i>]' },
-    { selector: '#mwrw', text: '[<i>add a citation?</i>]' },
-    { selector: '#mwyQ', text: '[<i>add a citation?</i>]' },
-    { selector: '#mw0A', text: '[<i>add a citation?</i>]' },
-    { selector: '#mw5A', text: '[<i>add a citation?</i>]' },
-    { selector: '#mw7A', text: '[<i>add a citation?</i>]' },
-    { selector: '#mw7w', text: '[<i>add a citation?</i>]' },
-    { selector: '#mwAVY', text: '[<i>add a citation?</i>]' },
+    { selector: '#mwEw', text: '[<i>remove duplicate link?</i>]' },
+    { selector: '#mwKg', text: '[<i>add a citation?</i>]' },
+    { selector: '#mwMQ', text: '[<i>add a citation?</i>]' },
+    { selector: '#mwNQ', text: '[<i>add a citation?</i>]' },
+    { selector: '#mwOg', text: '[<i>add a citation?</i>]' },
+    { selector: '#mwPw', text: '[<i>add a citation?</i>]' },
+    { selector: '#mwbg', text: '[<i>add a citation?</i>]' },
+    { selector: '#mwfQ', text: '[<i>potential AI-generated content?</i>]' },
+    { selector: '#mwnw', text: '[<i>add a citation?</i>]' },
+    { selector: '#mwsQ', text: '[<i>add a citation?</i>]' },
+    { selector: '#mwyw', text: '[<i>add a citation?</i>]' },
+    { selector: '#mw0g', text: '[<i>add a citation?</i>]' },
+    { selector: '#mw5g', text: '[<i>add a citation?</i>]' },
+    { selector: '#mw7g', text: '[<i>add a citation?</i>]' },
+    { selector: '#mw8Q', text: '[<i>add a citation?</i>]' },
+    { selector: '#mwAVk', text: '[<i>add a citation?</i>]' },
   ]
 
   // --- summary accordion injection ---
@@ -301,15 +302,17 @@
   }
 
   function buildCitationCard(el: Element, block: Element): CardData | null {
-    const blockClone = block.cloneNode(true) as Element
+    let blockClone: Element
 
     if (el === block) {
+      blockClone = block.cloneNode(true) as Element
       wrapAllContent(blockClone)
     } else {
-      // selector is a descendant — highlight the specific inline element
+      // Clone AFTER marking so the attribute is captured in the snapshot
       el.setAttribute('data-highlight-target', '1')
-      const targetInClone = blockClone.querySelector('[data-highlight-target]') as Element | null
+      blockClone = block.cloneNode(true) as Element
       el.removeAttribute('data-highlight-target')
+      const targetInClone = blockClone.querySelector('[data-highlight-target]') as Element | null
       if (targetInClone) {
         targetInClone.removeAttribute('data-highlight-target')
         findInlineTarget(targetInClone, blockClone).classList.add('card__preview-duplicate')
@@ -335,14 +338,31 @@
   }
 
   function buildAiCard(el: Element, block: Element): CardData | null {
-    const blockClone = block.cloneNode(true) as Element
+    const blockquote = block.closest('blockquote') ?? (block.tagName === 'BLOCKQUOTE' ? block : null)
 
+    if (blockquote) {
+      const blockClone = blockquote.cloneNode(true) as Element
+      blockClone.classList.add('templatequote')
+      blockClone.querySelectorAll('p').forEach(p => wrapAllContent(p))
+      let previewHTML = ''
+      const prev = prevMeaningfulSibling(blockquote)
+      if (prev?.tagName === 'P') {
+        previewHTML = cleanClone(prev.cloneNode(true) as Element).outerHTML
+      }
+      previewHTML += cleanClone(blockClone).outerHTML
+      return { type: 'ai-content', previewHTML }
+    }
+
+    let blockClone: Element
     if (el === block) {
+      blockClone = block.cloneNode(true) as Element
       wrapAllContent(blockClone)
     } else {
+      // Clone AFTER marking so the attribute is captured in the snapshot
       el.setAttribute('data-highlight-target', '1')
-      const targetInClone = blockClone.querySelector('[data-highlight-target]') as Element | null
+      blockClone = block.cloneNode(true) as Element
       el.removeAttribute('data-highlight-target')
+      const targetInClone = blockClone.querySelector('[data-highlight-target]') as Element | null
       if (targetInClone) {
         targetInClone.removeAttribute('data-highlight-target')
         findInlineTarget(targetInClone, blockClone).classList.add('card__preview-duplicate')
@@ -350,17 +370,7 @@
         wrapAllContent(blockClone)
       }
     }
-
-    let previewHTML = ''
-    if (block.tagName === 'BLOCKQUOTE') {
-      const prev = prevMeaningfulSibling(block)
-      if (prev?.tagName === 'P' && (prev.textContent?.length ?? 0) < 200) {
-        previewHTML = cleanClone(prev.cloneNode(true) as Element).outerHTML
-      }
-    }
-    previewHTML += cleanClone(blockClone).outerHTML
-
-    return { type: 'ai-content', previewHTML }
+    return { type: 'ai-content', previewHTML: cleanClone(blockClone).outerHTML }
   }
 
   function buildCardMap(root: Element): Map<string, CardData> {
@@ -514,17 +524,29 @@
   }
 
   onMounted(() => {
+    void fetch(`${import.meta.env.BASE_URL}snapshots/alan-kay.html`)
+      .then(r => r.text())
+      .then(text => {
+        const bodyMatch = text.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+        snapshotHtml.value = bodyMatch ? bodyMatch[1] : text
+      })
+
     if (!containerRef.value) return
     containerRef.value.addEventListener('click', onSectionEditCapture, true)
     tryActivate()
     if (showImprove) injectImproveTab()
+    let activateDebounce: ReturnType<typeof setTimeout> | null = null
     observer = new MutationObserver(() => {
-      const activated = tryActivate()
-      if (showImprove) injectImproveTab()
-      if (activated && !showHatnoteToast) {
-        observer?.disconnect()
-        observer = null
-      }
+      if (activateDebounce) clearTimeout(activateDebounce)
+      activateDebounce = setTimeout(() => {
+        activateDebounce = null
+        const activated = tryActivate()
+        if (showImprove) injectImproveTab()
+        if (activated && !showHatnoteToast) {
+          observer?.disconnect()
+          observer = null
+        }
+      }, 80)
     })
     observer.observe(containerRef.value, { childList: true, subtree: true })
   })
@@ -570,7 +592,7 @@
       :class="{ 'protowiki-improve-active': showImprove && improveTabActive }"
       @click="onArticleClick"
     >
-      <Article title="Alan Kay" />
+      <Article display-title="Alan Kay" :html="snapshotHtml" />
       <div v-if="showImprove && improveTabActive" class="protowiki-improve-content">
         <div class="protowiki-improve-card">
           <div class="protowiki-improve-card__header">
