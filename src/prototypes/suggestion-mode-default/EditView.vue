@@ -1,24 +1,63 @@
 <script setup lang="ts">
-  import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-  import { CdxButton, CdxIcon } from '@wikimedia/codex'
-  import { cdxIconClose, cdxIconEdit, cdxIconEllipsis, cdxIconSuccess, cdxIconUndo } from '@wikimedia/codex-icons'
+  import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+  import { CdxButton, CdxIcon, CdxField, CdxTextInput, CdxTextArea } from '@wikimedia/codex'
+  import { cdxIconClose, cdxIconEdit, cdxIconEllipsis, cdxIconCheck, cdxIconUndo } from '@wikimedia/codex-icons'
   import type { CardData } from './types'
+  import SaveChangesDialog from './SaveChangesDialog.vue'
 
-  const props = defineProps<{ cards: CardData[] }>()
+  const props = defineProps<{ cards: CardData[], showPublish?: boolean }>()
   const emit = defineEmits<{ close: [] }>()
 
-  const removedIndices = ref(new Set<number>())
-  const anyRemoved = computed(() => removedIndices.value.size > 0)
+  type CardMode = 'default' | 'removing' | 'citing' | 'cited' | 'editing' | 'edited' | 'published'
 
-  function onRemoveLink(i: number) {
-    removedIndices.value = new Set([...removedIndices.value, i])
+  const cardModes = ref<CardMode[]>([])
+  const citationInputs = ref<string[]>([])
+  const editTexts = ref<string[]>([])
+
+  watch(() => props.cards, (cards) => {
+    cardModes.value = cards.map(() => 'default')
+    citationInputs.value = cards.map(() => '')
+    editTexts.value = cards.map((c) => c.plainText ?? '')
+  }, { immediate: true })
+
+  const saveDialogOpen = ref(false)
+  const saveDialogCardIdx = ref(-1)
+  const saveDialogSummary = ref('')
+
+  function buildCumulativeSummary(): string {
+    return props.cards
+      .map((card, idx) => {
+        const mode = cardModes.value[idx]
+        if (mode === 'default' || mode === 'published') return null
+        if (card.type === 'remove-duplicate') return 'Removed duplicate link'
+        if (card.type === 'add-citation') {
+          const url = (citationInputs.value[idx] ?? '').trim()
+          return url ? `Added citation: ${url}` : 'Added citation'
+        }
+        if (card.type === 'ai-content') return 'Removed potential AI-generated content'
+        return null
+      })
+      .filter(Boolean)
+      .join('\n')
   }
 
-  function onUndoRemove(i: number) {
-    const next = new Set(removedIndices.value)
-    next.delete(i)
-    removedIndices.value = next
+  function openSaveDialog(idx: number) {
+    saveDialogCardIdx.value = idx
+    saveDialogSummary.value = buildCumulativeSummary()
+    saveDialogOpen.value = true
   }
+
+  function onSaveDialogPublish() {
+    saveDialogOpen.value = false
+    cardModes.value = cardModes.value.map(m =>
+      (m !== 'default' && m !== 'published') ? 'published' : m
+    )
+    emit('close')
+  }
+
+  const anyEdits = computed(() => cardModes.value.some(m => !['default', 'published', 'citing', 'editing'].includes(m)))
+  const numEdits = computed(() => cardModes.value.filter(m => !['default', 'published', 'citing', 'editing'].includes(m)).length)
+  const numSuggestionsLeft = computed(() => cardModes.value.filter(m => ['default', 'citing', 'editing'].includes(m)).length)
 
   const bottomHeights = ref<number[]>([])
   const resizeObservers: ResizeObserver[] = []
@@ -55,17 +94,64 @@
     if (rafId !== null) cancelAnimationFrame(rafId)
   })
 
-
-  function resolvePreviewHTML(html: string): string {
+  function removedLinksHTML(html: string): string {
     const div = document.createElement('div')
     div.innerHTML = html
-    div.querySelectorAll('a.card__preview-duplicate').forEach(a => {
-      a.replaceWith(document.createTextNode(a.textContent ?? ''))
-    })
-    div.querySelectorAll('.card__preview-duplicate').forEach(el => {
-      el.classList.remove('card__preview-duplicate')
+    const duplicates = div.querySelectorAll('a.card__preview-duplicate')
+    duplicates.forEach((a, idx) => {
+      if (idx === 0) {
+        // Preserve the first instance, remove highlight
+        a.classList.remove('card__preview-duplicate')
+      } else {
+        // Unlink duplicate instances by turning them into text
+        a.replaceWith(document.createTextNode(a.textContent ?? ''))
+      }
     })
     return div.innerHTML
+  }
+
+  function citedLinksHTML(html: string): string {
+    const div = document.createElement('div')
+    div.innerHTML = html
+    const target = div.querySelector('.card__preview-duplicate')
+    if (target) {
+      const sup = document.createElement('sup')
+      sup.className = 'mw-reflink'
+      sup.style.color = 'var(--color-progressive, #3366cc)'
+      sup.style.fontWeight = 'bold'
+      sup.style.marginLeft = '2px'
+      sup.textContent = '[1]'
+      target.after(sup)
+      target.classList.remove('card__preview-duplicate')
+    }
+    return div.innerHTML
+  }
+
+  function editedContentHTML(idx: number): string {
+    const card = props.cards[idx]
+    const text = editTexts.value[idx]
+    const div = document.createElement('div')
+    div.innerHTML = card.previewHTML
+    const target = div.querySelector('.card__preview-duplicate')
+    if (target) {
+      target.textContent = text
+      target.classList.remove('card__preview-duplicate')
+    }
+    return div.innerHTML
+  }
+
+  function resolvedPreviewHTML(card: CardData, idx: number): string {
+    const mode = cardModes.value[idx]
+    if (card.type === 'remove-duplicate' && (mode === 'removing' || mode === 'published')) {
+      return removedLinksHTML(card.previewHTML)
+    }
+    if (card.type === 'add-citation' && (mode === 'cited' || mode === 'published')) {
+      return citedLinksHTML(card.previewHTML)
+    }
+    if (card.type === 'ai-content' && (mode === 'edited' || mode === 'published')) {
+      return editedContentHTML(idx)
+    }
+    return card.previewHTML
   }
 
   function titleFor(type: CardData['type']): string {
@@ -84,12 +170,47 @@
     }[type]
   }
 
-  function actionsFor(type: CardData['type']): { label: string }[] {
-    return {
-      'remove-duplicate': [{ label: 'Remove link' }, { label: 'Dismiss' }],
-      'add-citation': [{ label: 'Add citation' }, { label: 'No' }],
-      'ai-content': [{ label: 'Edit' }, { label: 'Dismiss' }],
-    }[type]
+  function handlePrimaryAction(card: CardData, idx: number) {
+    if (card.type === 'remove-duplicate') cardModes.value[idx] = 'removing'
+    else if (props.showPublish && card.type === 'add-citation') cardModes.value[idx] = 'citing'
+    else if (props.showPublish && card.type === 'ai-content') cardModes.value[idx] = 'editing'
+  }
+
+
+
+  function handleCited(idx: number) {
+    if (citationInputs.value[idx].trim()) {
+      cardModes.value[idx] = 'cited'
+    }
+  }
+
+  function handleEdited(idx: number) {
+    if (editTexts.value[idx].trim()) {
+      cardModes.value[idx] = 'edited'
+    }
+  }
+
+  function handleRevert(idx: number) {
+    cardModes.value[idx] = 'default'
+  }
+
+  function handleContinue(idx: number) {
+    const nextIdx = idx + 1
+    if (nextIdx >= props.cards.length) return
+    const carousel = document.querySelector<HTMLElement>('.edit-view__carousel')
+    const card = carousel?.children[nextIdx] as HTMLElement | undefined
+    card?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }
+
+  const carouselRef = ref<HTMLElement | null>(null)
+
+  function is(idx: number, ...modes: CardMode[]) {
+    return modes.includes(cardModes.value[idx])
+  }
+  const citingDisabled = (idx: number) => (citationInputs.value[idx] ?? '').trim() === ''
+  const aiEditDisabled = (idx: number) => {
+    const cur = (editTexts.value[idx] ?? '').trim()
+    return cur === (props.cards[idx].plainText ?? '').trim() || cur === ''
   }
 </script>
 
@@ -101,44 +222,100 @@
         <CdxIcon :icon="cdxIconClose" />
       </CdxButton>
     </header>
-    <p class="edit-view__suggestion-count">{{ cards.length }} edit suggestions</p>
+    <p v-if="numSuggestionsLeft > 0" class="edit-view__suggestion-count">
+      {{ numSuggestionsLeft }} edit suggestion{{ numSuggestionsLeft === 1 ? '' : 's' }}
+    </p>
     <div class="edit-view__body">
-      <div class="edit-view__carousel">
+      <div ref="carouselRef" class="edit-view__carousel">
         <div v-for="(card, i) in cards" :key="i" class="edit-view__card">
           <div
             class="card__preview"
             :style="{ paddingBottom: `calc(${bottomHeights[i] ?? 0}px + var(--spacing-100, 16px))` }"
-            v-html="removedIndices.has(i) ? resolvePreviewHTML(card.previewHTML) : card.previewHTML"
+            :class="{ 'card__preview--removing': is(i, 'removing', 'published'), 'card__preview--done': is(i, 'published') }"
+            v-html="resolvedPreviewHTML(card, i)"
           />
           <div class="card__bottom">
             <Transition name="card-confirm" mode="out-in">
-              <div v-if="!removedIndices.has(i)" key="instructions" class="card__instructions">
+              <div v-if="is(i, 'published')" key="published" class="card__message">
+                <CdxIcon :icon="cdxIconCheck" class="card__message-icon" />
+                <span class="card__message-label">Published</span>
+              </div>
+
+              <div v-else-if="is(i, 'removing')" key="removing" class="card__message">
+                <CdxIcon :icon="cdxIconCheck" class="card__message-icon" />
+                <span class="card__message-label">Remove duplicate link</span>
+                <div class="card__message-actions">
+                  <CdxButton weight="quiet" size="small" aria-label="Undo" @click="handleRevert(i)">
+                    <CdxIcon :icon="cdxIconUndo" />
+                  </CdxButton>
+                  
+                </div>
+              </div>
+
+              <div v-else-if="is(i, 'cited')" key="cited" class="card__message">
+                <CdxIcon :icon="cdxIconCheck" class="card__message-icon" />
+                <span class="card__message-label">Added citation</span>
+                <div class="card__message-actions">
+                  <CdxButton weight="quiet" size="small" aria-label="Undo" @click="handleRevert(i)">
+                    <CdxIcon :icon="cdxIconUndo" />
+                  </CdxButton>
+                  
+                </div>
+              </div>
+
+              <div v-else-if="is(i, 'edited')" key="edited" class="card__message">
+                <CdxIcon :icon="cdxIconCheck" class="card__message-icon" />
+                <span class="card__message-label">Applied edit</span>
+                <div class="card__message-actions">
+                  <CdxButton weight="quiet" size="small" aria-label="Undo" @click="handleRevert(i)">
+                    <CdxIcon :icon="cdxIconUndo" />
+                  </CdxButton>
+                  
+                </div>
+              </div>
+
+              <div v-else-if="is(i, 'citing')" key="citing" class="card__instructions">
+                <p class="card__instructions-title">Add a citation</p>
+                <p class="card__instructions-description">Paste a URL or enter a reference.</p>
+                <CdxField class="card__citation-field">
+                  <template #label>Citation URL or reference</template>
+                  <CdxTextInput v-model="citationInputs[i]" placeholder="https://example.com/source" input-type="url" />
+                </CdxField>
+                <div class="card__actions">
+                  <CdxButton action="progressive" weight="primary" :disabled="citingDisabled(i)" @click="handleCited(i)">Add citation</CdxButton>
+                  <CdxButton weight="quiet" @click="handleRevert(i)">Cancel</CdxButton>
+                </div>
+              </div>
+
+              <div v-else-if="is(i, 'editing')" key="editing" class="card__instructions">
+                <p class="card__instructions-title">Edit content</p>
+                <p class="card__instructions-description">Remove or rewrite any inaccurate text.</p>
+                <CdxField class="card__edit-field">
+                  <template #label>Article text</template>
+                  <CdxTextArea v-model="editTexts[i]" :rows="5" class="card__edit-textarea" />
+                </CdxField>
+                <div class="card__actions">
+                  <CdxButton action="progressive" weight="primary" :disabled="aiEditDisabled(i)" @click="handleEdited(i)">Apply edit</CdxButton>
+                  <CdxButton weight="quiet" @click="handleRevert(i)">Cancel</CdxButton>
+                </div>
+              </div>
+
+              <div v-else key="instructions" class="card__instructions">
                 <div class="card__instructions-header">
                   <p class="card__instructions-title">{{ titleFor(card.type) }}</p>
                 </div>
-                <!-- eslint-disable-next-line vue/no-v-html -->
                 <p class="card__instructions-description" v-html="descriptionFor(card.type)" />
                 <div class="card__actions">
-                  <template v-for="action in actionsFor(card.type)" :key="action.label">
-                    <CdxButton
-                      v-if="card.type === 'remove-duplicate' && action.label === 'Remove link'"
-                      @click="onRemoveLink(i)"
-                    >
-                      {{ action.label }}
-                    </CdxButton>
-                    <CdxButton v-else>{{ action.label }}</CdxButton>
-                  </template>
+                  <CdxButton action="progressive" weight="primary" @click="handlePrimaryAction(card, i)">
+                    <template v-if="card.type === 'remove-duplicate'">Remove link</template>
+                    <template v-else-if="card.type === 'add-citation'">Add citation</template>
+                    <template v-else>Edit</template>
+                  </CdxButton>
+                  
                   <CdxButton weight="quiet" aria-label="More options" class="card__actions-more">
                     <CdxIcon :icon="cdxIconEllipsis" />
                   </CdxButton>
                 </div>
-              </div>
-              <div v-else key="message" class="card__message">
-                <CdxIcon :icon="cdxIconSuccess" class="card__message-icon" />
-                <span class="card__message-label">Remove duplicate link</span>
-                <CdxButton weight="quiet" size="small" class="card__message-undo" aria-label="Undo" @click="onUndoRemove(i)">
-                  <CdxIcon :icon="cdxIconUndo" />
-                </CdxButton>
               </div>
             </Transition>
           </div>
@@ -148,14 +325,16 @@
     <footer class="edit-view__footer">
       <Transition name="card-confirm">
         <CdxButton
-          v-if="anyRemoved"
+          v-if="anyEdits"
           key="publish"
           action="progressive"
           weight="primary"
           size="large"
           class="edit-view__publish-button"
+          :class="{ 'animate__animated animate__shakeX': anyEdits && numSuggestionsLeft === 0 }"
+          @click="showPublish ? openSaveDialog(-1) : emit('close')"
         >
-          Publish
+          Publish {{ numEdits }} {{ numEdits === 1 ? 'change' : 'changes' }}
         </CdxButton>
       </Transition>
       <CdxButton weight="quiet" size="large">
@@ -163,6 +342,15 @@
         Edit full article
       </CdxButton>
     </footer>
+
+    <SaveChangesDialog
+      v-if="showPublish"
+      :open="saveDialogOpen"
+      :initial-summary="saveDialogSummary"
+      :change-count="numEdits"
+      @back="saveDialogOpen = false"
+      @publish="onSaveDialogPublish"
+    />
   </div>
 </template>
 
@@ -242,7 +430,10 @@
     padding: var(--spacing-100, 16px);
     font-size: var(--font-size-medium, 1rem);
     line-height: var(--line-height-medium, 1.6);
+    transition: opacity 200ms ease;
   }
+
+  .card__preview--done { opacity: 0.45; }
 
   .card__preview :deep(a) {
     color: var(--color-progressive, #3366cc);
@@ -332,9 +523,25 @@
     flex: 1;
   }
 
+  .card__message-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-25, 4px);
+    margin-inline-start: auto;
+  }
+
   .card__message-undo {
     color: var(--color-neutral);
-    margin-inline-start: auto;
+  }
+
+  .card__citation-field, .card__edit-field {
+    margin-bottom: var(--spacing-100, 16px);
+  }
+
+  .card__edit-textarea {
+    width: 100%;
+    font-size: var(--font-size-small);
+    font-family: var(--font-family-system-sans);
   }
 
   .card-confirm-enter-active {
@@ -373,5 +580,52 @@
 
   .edit-view__publish-button {
     width: 100%;
+  }
+
+  .edit-view__publish-button {
+    width: 100%;
+  }
+</style>
+
+<style>
+  :root {
+    --animate-duration: 1s;
+  }
+
+  .animate__animated {
+    animation-duration: var(--animate-duration);
+    animation-fill-mode: both;
+  }
+
+  @keyframes shakeX {
+    from,
+    to {
+      transform: translate3d(0, 0, 0);
+    }
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+      transform: translate3d(-10px, 0, 0);
+    }
+    20%,
+    40%,
+    60%,
+    80% {
+      transform: translate3d(10px, 0, 0);
+    }
+  }
+
+  .animate__shakeX {
+    animation-name: shakeX;
+  }
+
+  @media print, (prefers-reduced-motion: reduce) {
+    .animate__animated {
+      animation-duration: 1ms !important;
+      transition-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+    }
   }
 </style>
