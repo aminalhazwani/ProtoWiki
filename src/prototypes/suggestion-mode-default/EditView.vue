@@ -5,7 +5,7 @@
   import type { CardData } from './types'
   import SaveChangesDialog from './SaveChangesDialog.vue'
 
-  const props = defineProps<{ cards: CardData[] }>()
+  const props = defineProps<{ cards: CardData[], showPublish?: boolean }>()
   const emit = defineEmits<{ close: [] }>()
 
   type CardMode = 'default' | 'removing' | 'citing' | 'cited' | 'editing' | 'edited' | 'published'
@@ -172,8 +172,8 @@
 
   function handlePrimaryAction(card: CardData, idx: number) {
     if (card.type === 'remove-duplicate') cardModes.value[idx] = 'removing'
-    else if (card.type === 'add-citation') cardModes.value[idx] = 'citing'
-    else if (card.type === 'ai-content') cardModes.value[idx] = 'editing'
+    else if (props.showPublish && card.type === 'add-citation') cardModes.value[idx] = 'citing'
+    else if (props.showPublish && card.type === 'ai-content') cardModes.value[idx] = 'editing'
   }
 
 
@@ -332,7 +332,7 @@
           size="large"
           class="edit-view__publish-button"
           :class="{ 'animate__animated animate__shakeX': anyEdits && numSuggestionsLeft === 0 }"
-          @click="openSaveDialog(-1)"
+          @click="showPublish ? openSaveDialog(-1) : emit('close')"
         >
           Publish {{ numEdits }} {{ numEdits === 1 ? 'change' : 'changes' }}
         </CdxButton>
@@ -344,6 +344,7 @@
     </footer>
 
     <SaveChangesDialog
+      v-if="showPublish"
       :open="saveDialogOpen"
       :initial-summary="saveDialogSummary"
       :change-count="numEdits"
