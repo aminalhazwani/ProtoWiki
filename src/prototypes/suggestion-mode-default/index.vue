@@ -634,29 +634,76 @@
     >
       <Article display-title="Alan Kay" :html="snapshotHtml" />
       <div v-if="showImprove && improveTabActive" class="protowiki-improve-content">
-        <div class="protowiki-improve-card">
-          <div class="protowiki-improve-card__header">
-            <span class="protowiki-improve-card__badge">{{ duplicateCount }}</span>
-            <span class="protowiki-improve-card__title">Remove duplicate link</span>
-          </div>
-          <p class="protowiki-improve-card__description">Help readers navigate more easily by removing repeated links.</p>
-          <CdxButton action="progressive" weight="primary" @click="editViewCards = cards.filter(c => c.type === 'remove-duplicate'); editViewOpen = true">Remove links</CdxButton>
+        <div class="protowiki-improve-banner">
+          <p class="protowiki-improve-banner__title">Machine-generated</p>
+          <p class="protowiki-improve-banner__body">
+            This article is <strong>C-class</strong> due to gaps in verifiability
+            and accessibility. Addressing the suggestions below could bring it to B-class.
+          </p>
         </div>
+        <!-- Verifiability -->
         <div class="protowiki-improve-card">
-          <div class="protowiki-improve-card__header">
-            <span class="protowiki-improve-card__badge">{{ citationCount }}</span>
-            <span class="protowiki-improve-card__title">Add a citation</span>
+          <h3 class="protowiki-improve-section-title">Verifiability</h3>
+          <div class="protowiki-improve-card__rows">
+            <div class="protowiki-improve-card__row">
+              <div class="protowiki-improve-card__header">
+                <span class="protowiki-improve-card__badge protowiki-improve-card__badge--error">{{ citationCount }}</span>
+                <span class="protowiki-improve-card__title">Add a citation</span>
+              </div>
+              <p class="protowiki-improve-card__description">Help readers understand where this information is coming from by adding a citation.</p>
+              <CdxButton action="progressive" weight="primary" @click="editViewCards = cards.filter(c => c.type === 'add-citation'); editViewOpen = true">Find references</CdxButton>
+            </div>
           </div>
-          <p class="protowiki-improve-card__description">Help readers understand where this information is coming from by adding a citation.</p>
-          <CdxButton action="progressive" weight="primary" @click="editViewCards = cards.filter(c => c.type === 'add-citation'); editViewOpen = true">Find references</CdxButton>
         </div>
+        <!-- Accessibility -->
         <div class="protowiki-improve-card">
-          <div class="protowiki-improve-card__header">
-            <span class="protowiki-improve-card__badge">{{ aiCount }}</span>
-            <span class="protowiki-improve-card__title">Potential AI-generated content</span>
+          <h3 class="protowiki-improve-section-title">Accessibility</h3>
+          <div class="protowiki-improve-card__rows">
+            <div class="protowiki-improve-card__row">
+              <div class="protowiki-improve-card__header">
+                <span class="protowiki-improve-card__badge protowiki-improve-card__badge--warning">4</span>
+                <span class="protowiki-improve-card__title">Alt text</span>
+              </div>
+              <p class="protowiki-improve-card__description">Visually-impaired readers rely on alt text to understand what images show.</p>
+              <CdxButton action="progressive" weight="primary">Add alt text</CdxButton>
+            </div>
+            <div class="protowiki-improve-card__row">
+              <div class="protowiki-improve-card__header">
+                <span class="protowiki-improve-card__badge protowiki-improve-card__badge--warning">3</span>
+                <span class="protowiki-improve-card__title">Simplify complex sentences</span>
+              </div>
+              <p class="protowiki-improve-card__description">Some sentences may be difficult to read for people to read.</p>
+              <CdxButton action="progressive" weight="primary">Revise tone</CdxButton>
+            </div>
           </div>
-          <p class="protowiki-improve-card__description">Help readers trust the article by removing any AI content or rewriting any inaccurate, unverifiable, or unencyclopedic information.</p>
-          <CdxButton action="progressive" weight="primary" @click="editViewCards = cards.filter(c => c.type === 'ai-content'); editViewOpen = true">Review text</CdxButton>
+        </div>
+        <!-- Neutrality -->
+        <div class="protowiki-improve-card">
+          <h3 class="protowiki-improve-section-title">Neutrality</h3>
+          <div class="protowiki-improve-card__rows">
+            <div class="protowiki-improve-card__row">
+              <div class="protowiki-improve-card__header">
+                <span class="protowiki-improve-card__badge protowiki-improve-card__badge--success">{{ aiCount }}</span>
+                <span class="protowiki-improve-card__title">Potential AI-generated content</span>
+              </div>
+              <p class="protowiki-improve-card__description">Help readers trust the article by removing any AI content or rewriting any inaccurate, unverifiable, or unencyclopedic information.</p>
+              <CdxButton action="progressive" weight="primary" @click="editViewCards = cards.filter(c => c.type === 'ai-content'); editViewOpen = true">Review text</CdxButton>
+            </div>
+          </div>
+        </div>
+        <!-- Cleanup -->
+        <div class="protowiki-improve-card">
+          <h3 class="protowiki-improve-section-title">Cleanup</h3>
+          <div class="protowiki-improve-card__rows">
+            <div class="protowiki-improve-card__row">
+              <div class="protowiki-improve-card__header">
+                <span class="protowiki-improve-card__badge protowiki-improve-card__badge--success">{{ duplicateCount }}</span>
+                <span class="protowiki-improve-card__title">Remove duplicate link</span>
+              </div>
+              <p class="protowiki-improve-card__description">Help readers navigate more easily by removing repeated links.</p>
+              <CdxButton action="progressive" weight="primary" @click="editViewCards = cards.filter(c => c.type === 'remove-duplicate'); editViewOpen = true">Remove link</CdxButton>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -696,20 +743,66 @@
     padding-bottom: var(--spacing-200, 32px);
   }
 
+  .protowiki-improve-banner {
+    background-color: var(--background-color-warning-subtle, #fdf2d5);
+    border: 1px solid var(--border-color-warning, #ab7f2a);
+    border-radius: var(--border-radius-base, 2px);
+    padding: var(--spacing-100, 16px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-25, 4px);
+  }
+
+  .protowiki-improve-banner__title {
+    margin: 0;
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-subtle);
+    line-height: var(--line-height-small);
+  }
+
+  .protowiki-improve-banner__body {
+    margin: 0;
+    font-size: var(--font-size-medium);
+    font-weight: var(--font-weight-normal);
+    color: var(--color-base);
+    line-height: var(--line-height-medium);
+  }
+
   .protowiki-improve-card {
     display: flex;
     flex-direction: column;
+    gap: var(--spacing-50, 8px);
     padding: var(--spacing-75);
     background-color: var(--background-color-base, #fff);
     border: 1px solid var(--border-color-subtle, #c8ccd1);
     border-radius: var(--border-radius-base, 2px);
   }
 
+  .protowiki-improve-section-title {
+    margin: 0;
+    font-size: var(--font-size-large, 18px);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-base);
+    line-height: var(--line-height-large, 28px);
+  }
+
+  .protowiki-improve-card__rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-100, 16px);
+  }
+
+  .protowiki-improve-card__row {
+    display: flex;
+    flex-direction: column;
+  }
+
   .protowiki-improve-card__header {
     display: flex;
     align-items: center;
     gap: var(--spacing-50, 8px);
-    margin-bottom: var(--spacing-25, 4px);
+    margin-bottom: var(--spacing-0, 0);
   }
 
   .protowiki-improve-card__badge {
@@ -725,6 +818,21 @@
     font-weight: var(--font-weight-bold);
     color: var(--color-base);
     flex-shrink: 0;
+  }
+
+  .protowiki-improve-card__badge--error {
+    background-color: var(--color-error, #f54739);
+    color: var(--color-inverted, #fff);
+  }
+
+  .protowiki-improve-card__badge--warning {
+    background-color: #edb537;
+    color: var(--color-base, #202122);
+  }
+
+  .protowiki-improve-card__badge--success {
+    background-color: var(--color-success, #099979);
+    color: var(--color-inverted, #fff);
   }
 
   .protowiki-improve-card__title {
@@ -743,7 +851,7 @@
     line-height: var(--line-height-medium);
   }
 
-  .protowiki-improve-card .cdx-button {
+  .protowiki-improve-card__row .cdx-button {
     margin-left: var(--spacing-200);
     align-self: flex-start;
   }
