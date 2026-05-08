@@ -392,6 +392,30 @@
     return map
   }
 
+  function onSectionEditCapture(e: MouseEvent) {
+    const btn = (e.target as HTMLElement).closest('.protowiki-mobile-h2__edit')
+    if (!btn) return
+
+    e.stopPropagation()
+
+    const section = btn.closest('section[data-mw-section-id]')
+    if (!section) return
+
+    const cardMap = cardMapRef.value
+    const sectionCards: CardData[] = []
+    for (const { selector } of HATNOTE_INJECTIONS) {
+      const el = section.querySelector(selector)
+      if (!el) continue
+      const card = cardMap.get(selector)
+      if (card) sectionCards.push(card)
+    }
+
+    if (sectionCards.length > 0) {
+      editViewCards.value = sectionCards
+      editViewOpen.value = true
+    }
+  }
+
   // --- viewport/toast observer ---
 
   const visibleSelectors = ref(new Set<string>())
@@ -491,6 +515,7 @@
 
   onMounted(() => {
     if (!containerRef.value) return
+    containerRef.value.addEventListener('click', onSectionEditCapture, true)
     tryActivate()
     if (showImprove) injectImproveTab()
     observer = new MutationObserver(() => {
@@ -505,6 +530,7 @@
   })
 
   onUnmounted(() => {
+    containerRef.value?.removeEventListener('click', onSectionEditCapture, true)
     observer?.disconnect()
     intersectionObserver?.disconnect()
     summaryApp?.unmount()
