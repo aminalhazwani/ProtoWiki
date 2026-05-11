@@ -1,11 +1,11 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
-  import { CdxButton, CdxIcon, CdxField, CdxTextInput, CdxTextArea } from '@wikimedia/codex'
-  import { cdxIconClose, cdxIconEdit, cdxIconEllipsis, cdxIconCheck, cdxIconUndo } from '@wikimedia/codex-icons'
+  import { CdxButton, CdxIcon, CdxField, CdxTextInput, CdxTextArea, CdxMenuButton } from '@wikimedia/codex'
+  import { cdxIconClose, cdxIconEdit, cdxIconEllipsis, cdxIconCheck, cdxIconSuccess, cdxIconUndo } from '@wikimedia/codex-icons'
   import type { CardData } from './types'
   import SaveChangesDialog from './SaveChangesDialog.vue'
 
-  const props = defineProps<{ cards: CardData[], showPublish?: boolean }>()
+  const props = defineProps<{ cards: CardData[], showPublish?: boolean, showPublish2?: boolean }>()
   const emit = defineEmits<{ close: [] }>()
 
   type CardMode = 'default' | 'removing' | 'citing' | 'cited' | 'editing' | 'edited' | 'published'
@@ -19,6 +19,13 @@
     citationInputs.value = cards.map(() => '')
     editTexts.value = cards.map((c) => c.plainText ?? '')
   }, { immediate: true })
+
+  const cardMenuSelected = ref<string | null>(null)
+
+  const cardMenuItems = [
+    { value: 'about', label: 'About suggestions' },
+    { value: 'report', label: 'Report a problem' },
+  ]
 
   const saveDialogOpen = ref(false)
   const saveDialogCardIdx = ref(-1)
@@ -172,8 +179,8 @@
 
   function handlePrimaryAction(card: CardData, idx: number) {
     if (card.type === 'remove-duplicate') cardModes.value[idx] = 'removing'
-    else if (props.showPublish && card.type === 'add-citation') cardModes.value[idx] = 'citing'
-    else if (props.showPublish && card.type === 'ai-content') cardModes.value[idx] = 'editing'
+    else if ((props.showPublish || props.showPublish2) && card.type === 'add-citation') cardModes.value[idx] = 'citing'
+    else if ((props.showPublish || props.showPublish2) && card.type === 'ai-content') cardModes.value[idx] = 'editing'
   }
 
 
@@ -237,40 +244,40 @@
           <div class="card__bottom">
             <Transition name="card-confirm" mode="out-in">
               <div v-if="is(i, 'published')" key="published" class="card__message">
-                <CdxIcon :icon="cdxIconCheck" class="card__message-icon" />
+                <CdxIcon :icon="showPublish2 ? cdxIconSuccess : cdxIconCheck" class="card__message-icon" />
                 <span class="card__message-label">Published</span>
               </div>
 
               <div v-else-if="is(i, 'removing')" key="removing" class="card__message">
-                <CdxIcon :icon="cdxIconCheck" class="card__message-icon" />
+                <CdxIcon :icon="showPublish2 ? cdxIconSuccess : cdxIconCheck" class="card__message-icon" />
                 <span class="card__message-label">Remove duplicate link</span>
                 <div class="card__message-actions">
                   <CdxButton weight="quiet" size="small" aria-label="Undo" @click="handleRevert(i)">
                     <CdxIcon :icon="cdxIconUndo" />
                   </CdxButton>
-                  
+
                 </div>
               </div>
 
               <div v-else-if="is(i, 'cited')" key="cited" class="card__message">
-                <CdxIcon :icon="cdxIconCheck" class="card__message-icon" />
+                <CdxIcon :icon="showPublish2 ? cdxIconSuccess : cdxIconCheck" class="card__message-icon" />
                 <span class="card__message-label">Added citation</span>
                 <div class="card__message-actions">
                   <CdxButton weight="quiet" size="small" aria-label="Undo" @click="handleRevert(i)">
                     <CdxIcon :icon="cdxIconUndo" />
                   </CdxButton>
-                  
+
                 </div>
               </div>
 
               <div v-else-if="is(i, 'edited')" key="edited" class="card__message">
-                <CdxIcon :icon="cdxIconCheck" class="card__message-icon" />
+                <CdxIcon :icon="showPublish2 ? cdxIconSuccess : cdxIconCheck" class="card__message-icon" />
                 <span class="card__message-label">Applied edit</span>
                 <div class="card__message-actions">
                   <CdxButton weight="quiet" size="small" aria-label="Undo" @click="handleRevert(i)">
                     <CdxIcon :icon="cdxIconUndo" />
                   </CdxButton>
-                  
+
                 </div>
               </div>
 
@@ -303,18 +310,32 @@
               <div v-else key="instructions" class="card__instructions">
                 <div class="card__instructions-header">
                   <p class="card__instructions-title">{{ titleFor(card.type) }}</p>
+                  <CdxMenuButton
+                    v-if="showPublish2"
+                    v-model:selected="cardMenuSelected"
+                    :menu-items="cardMenuItems"
+                    weight="quiet"
+                    class="card__instructions-menu"
+                  >
+                    <CdxIcon :icon="cdxIconEllipsis" />
+                  </CdxMenuButton>
                 </div>
                 <p class="card__instructions-description" v-html="descriptionFor(card.type)" />
                 <div class="card__actions">
-                  <CdxButton action="progressive" weight="primary" @click="handlePrimaryAction(card, i)">
-                    <template v-if="card.type === 'remove-duplicate'">Remove link</template>
-                    <template v-else-if="card.type === 'add-citation'">Add citation</template>
-                    <template v-else>Edit</template>
-                  </CdxButton>
-                  
-                  <CdxButton weight="quiet" aria-label="More options" class="card__actions-more">
-                    <CdxIcon :icon="cdxIconEllipsis" />
-                  </CdxButton>
+                  <template v-if="showPublish2">
+                    <CdxButton @click="handlePrimaryAction(card, i)">Accept</CdxButton>
+                    <CdxButton>Reject</CdxButton>
+                  </template>
+                  <template v-else>
+                    <CdxButton action="progressive" weight="primary" @click="handlePrimaryAction(card, i)">
+                      <template v-if="card.type === 'remove-duplicate'">Remove link</template>
+                      <template v-else-if="card.type === 'add-citation'">Add citation</template>
+                      <template v-else>Edit</template>
+                    </CdxButton>
+                    <CdxButton weight="quiet" aria-label="More options" class="card__actions-more">
+                      <CdxIcon :icon="cdxIconEllipsis" />
+                    </CdxButton>
+                  </template>
                 </div>
               </div>
             </Transition>
@@ -337,7 +358,13 @@
           Publish {{ numEdits }} {{ numEdits === 1 ? 'change' : 'changes' }}
         </CdxButton>
       </Transition>
-      <CdxButton weight="quiet" size="large">
+      <Transition v-if="showPublish2" name="card-confirm">
+        <CdxButton v-if="!anyEdits" key="edit-full" weight="quiet" size="large">
+          <CdxIcon :icon="cdxIconEdit" />
+          Edit full article
+        </CdxButton>
+      </Transition>
+      <CdxButton v-else weight="quiet" size="large">
         <CdxIcon :icon="cdxIconEdit" />
         Edit full article
       </CdxButton>
@@ -498,11 +525,18 @@
   }
 
   .card__instructions-header {
-    margin-bottom: var(--spacing-25, 2px);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-75, 12px);
   }
 
   .card__instructions-header .card__instructions-title {
     margin: 0;
+    flex: 1;
+  }
+
+  .card__instructions-menu {
+    margin-inline-end: calc(-1 * var(--spacing-25, 4px));
   }
 
   .card__message {

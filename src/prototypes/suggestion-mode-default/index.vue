@@ -27,6 +27,7 @@
   const showSummary = params.get('summary') === '1'
   const showImprove = params.get('improve') === '1'
   const showPublish = params.get('publish') === '1'
+  const showPublish2 = params.get('publish') === '2'
 
   const improveTabActive = ref(false)
 
@@ -709,7 +710,7 @@
     </div>
   </ChromeWrapper>
   <Transition name="edit-view">
-    <EditView v-if="editViewOpen" :cards="editViewCards" :show-publish="showPublish" @close="editViewOpen = false" />
+    <EditView v-if="editViewOpen" :cards="editViewCards" :show-publish="showPublish || showPublish2" :show-publish2="showPublish2" @close="editViewOpen = false" />
   </Transition>
   <Transition name="hatnote-toast">
     <div v-if="showHatnoteToast && visibleCount > 0" class="protowiki-hatnote-toast">
