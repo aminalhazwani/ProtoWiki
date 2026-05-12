@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { CdxIcon } from '@wikimedia/codex'
-import { cdxIconCheck, cdxIconLinkExternal, cdxIconUserTalk } from '@wikimedia/codex-icons'
+import { cdxIconCheck, cdxIconUserTalk } from '@wikimedia/codex-icons'
+import { RouterLink } from 'vue-router'
 
 import ChromeWrapper from '@/components/ChromeWrapper.vue'
 import Dashboard from '@/components/Dashboard.vue'
@@ -14,17 +15,16 @@ definePage({
   },
 })
 
-const feedbackUrl = 'https://en.wikipedia.org/wiki/Wikipedia:Feedback'
-const policiesUrl = 'https://en.wikipedia.org/wiki/Wikipedia:List_of_policies'
+/** Gallery / app home (file-based route `/`). */
+const HOME = '/'
 
 /** Shared across mobile + desktop for each matching module */
 const MODULE = {
-  thankTitle: 'Thank collaborators',
-  thankBody: 'No recent edits in scope.',
+  thankTitle: 'Contribute',
+  thankBody: 'No suggestions (yet)',
   impactTitle: 'Your impact',
-  policiesTitle: 'Policies',
-  policiesBody:
-    'Opens Wikipedia in a new tab — replace with your module content.',
+  policiesTitle: 'Learn',
+  policiesBody: 'Learn how to edit Wikipedia',
 } as const
 </script>
 
@@ -34,21 +34,15 @@ const MODULE = {
       <div class="template-dashboard-shell">
         <Dashboard>
           <template #banner>
-            <a
-              :href="feedbackUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="dashboard-mobile-banner__feedback"
-            >
+            <RouterLink :to="HOME" class="dashboard-mobile-banner__feedback">
               Share feedback
-              <CdxIcon :icon="cdxIconLinkExternal" size="x-small" />
-            </a>
+            </RouterLink>
           </template>
 
           <template #mobile>
             <DashboardModule
               class="dashboard-slot--mobile-primary"
-              to="/chrome-template"
+              :to="HOME"
               :title="MODULE.thankTitle"
               cta-label="Open module"
             >
@@ -79,7 +73,7 @@ const MODULE = {
             </DashboardModule>
 
             <DashboardModule
-              :href="policiesUrl"
+              :to="HOME"
               :title="MODULE.policiesTitle"
               hide-cta
             >
