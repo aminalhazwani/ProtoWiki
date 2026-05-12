@@ -9,7 +9,7 @@
  * This file holds **site-wide** defaults only: a tiny reset, semantic HTML
  * typography from the Codex style guide (`h1`–`h6`, `p`, lists, `blockquote`, …),
  * links / focus, and reader-only `.mw-first-heading` underline. Layout shells
- * (`ChromeWrapper`, `Article`, `ArticleLiveContent`, `ArticleMockContent`, `SpecialPageWrapper`, etc.) live next to those
+ * (`ChromeWrapper`, `LiveArticle`, `ArticleSnapshot`, `ArticleWrapper`, `ArticleRenderer`, `SpecialPageWrapper`, etc.) live next to those
  * components as `<style scoped>`.
  *
  * Theme-specific tweaks for shared classes live in `dark.css`.
@@ -289,7 +289,8 @@ hr {
 /*
  * Reader first-heading underline — MediaWiki `mw-first-heading` parity.
  * Typography comes from `h1` + Codex tokens above; this class adds only the
- * Wikipedia-style separator used by PlainWrapper, Article, editors.
+ * Wikipedia-style separator used by `PlainWrapper` and editor/demo surfaces —
+ * reader article titles ship in `ArticleHeader`, not an extra `.mw-first-heading`.
  */
 .mw-first-heading {
   padding-bottom: var(--spacing-50, 8px);

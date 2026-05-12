@@ -7,7 +7,7 @@ export type Skin = 'desktop' | 'mobile'
 export type Theme = 'light' | 'dark'
 
 /**
- * When `Article` / `SpecialPageWrapper` sit inside `ChromeWrapper`,
+ * When **`LiveArticle`**, **`ArticleSnapshot`**, **`ArticleWrapper`**, **`ArticleRenderer`**, or **`SpecialPageWrapper`** sit inside **`ChromeWrapper`**,
  * they inherit `effectiveSkin` via Vue inject so columns match chrome without
  * repeating `skin` on every child (embedded mobile previews still work).
  */

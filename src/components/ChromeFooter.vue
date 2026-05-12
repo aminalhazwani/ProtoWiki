@@ -24,19 +24,23 @@ interface Props {
    * Mock article “last edited” notice in the footer: Vector-style lines on **desktop**,
    * Minerva strip on **mobile**. Set **false** on special-page–style shells.
    */
-  showLastEditedNotice?: boolean
+  lastEditedNotice?: boolean
+  /** Shown as “Last edited … by **[username]**” in the mobile strip. **`ChromeWrapper`** forwards this. */
+  username?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   skin: undefined,
   theme: undefined,
-  showLastEditedNotice: true,
+  lastEditedNotice: true,
+  username: 'Username',
 })
 
 const effectiveSkin = computed<Skin>(() => props.skin ?? globalSkin.value)
 const effectiveTheme = computed<Theme>(() => props.theme ?? globalTheme.value)
 const isDesktop = computed(() => effectiveSkin.value === 'desktop')
-const showLastEditedMobile = computed(() => props.showLastEditedNotice && !isDesktop.value)
+const showLastEditedMobile = computed(() => props.lastEditedNotice && !isDesktop.value)
+const lastEditedByLabel = computed(() => props.username.trim() || 'Username')
 
 const links = [
   {
@@ -99,7 +103,7 @@ const mobileFooterLinks = [
       <!-- Desktop / tablet (Vector): centred column + prototype note -->
       <template v-if="isDesktop">
         <div class="chrome-footer__inner">
-          <template v-if="showLastEditedNotice">
+          <template v-if="props.lastEditedNotice">
             <p class="chrome-footer__last-edited-desktop">
               This page was last edited on 8 May 2026, at 04:34.
             </p>
@@ -110,19 +114,17 @@ const mobileFooterLinks = [
                 rel="noopener noreferrer"
                 title="Creative Commons Attribution-ShareAlike 4.0"
               >
-                Creative Commons Attribution-ShareAlike 4.0 License </a
-              >; additional terms may apply. By using this site, you agree to the
+                Creative Commons Attribution-ShareAlike 4.0 License
+              </a>; additional terms may apply. By using this site, you agree to the
               <a
                 href="https://foundation.wikimedia.org/wiki/Special:MyLanguage/Policy:Terms_of_Use"
                 rel="noopener noreferrer"
-                >Terms of Use</a
-              >
+                >Terms of Use</a>
               and the
               <a
                 href="https://foundation.wikimedia.org/wiki/Special:MyLanguage/Policy:Privacy_policy"
                 rel="noopener noreferrer"
-                >Privacy Policy</a
-              >. Wikimedia Foundation, Inc. is a non-profit organization.
+                >Privacy Policy</a>. Wikimedia Foundation, Inc. is a non-profit organization.
             </p>
           </template>
 
@@ -146,7 +148,7 @@ const mobileFooterLinks = [
         >
           <CdxIcon class="chrome-footer__last-edited-icon" :icon="cdxIconHistory" size="small" />
           <span class="chrome-footer__last-edited-text">
-            Last edited 1 month ago by <strong>Username</strong>
+            Last edited 1 month ago by <strong>{{ lastEditedByLabel }}</strong>
           </span>
           <CdxIcon
             class="chrome-footer__last-edited-chevron"
