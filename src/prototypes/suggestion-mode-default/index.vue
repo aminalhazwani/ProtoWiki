@@ -9,7 +9,7 @@
   })
 
   import { CdxButton, CdxIcon, CdxMessage, CdxAccordion } from '@wikimedia/codex'
-  import { cdxIconUserAvatarOutline, cdxIconSuccess } from '@wikimedia/codex-icons'
+  import { cdxIconUserAvatarOutline } from '@wikimedia/codex-icons'
   import Article from '@/components/Article.vue'
   import ChromeWrapper from '@/components/ChromeWrapper.vue'
   import EditView from './EditView.vue'
@@ -21,7 +21,6 @@
   function onPublished() {
     editViewOpen.value = false
     publishSuccess.value = true
-    setTimeout(() => { publishSuccess.value = false }, 1000)
   }
   const editViewCards = ref<CardData[]>([])
   const cardMapRef = ref(new Map<string, CardData>())
@@ -721,7 +720,7 @@
   </Transition>
   <Transition name="hatnote-toast">
     <div v-if="publishSuccess" class="protowiki-publish-success">
-      <CdxMessage type="success" :icon="cdxIconSuccess" :allow-user-dismiss="true" @user-dismissed="publishSuccess = false">
+      <CdxMessage type="success" :allow-user-dismiss="true" :auto-dismiss="3000" @user-dismissed="publishSuccess = false" @auto-dismissed="publishSuccess = false">
         Your edit was published
       </CdxMessage>
     </div>
