@@ -344,30 +344,50 @@
       </div>
     </div>
     <footer class="edit-view__footer">
-      <Transition name="card-confirm">
-        <CdxButton
-          v-if="anyEdits"
-          key="publish"
-          action="progressive"
-          weight="primary"
-          size="large"
-          class="edit-view__publish-button"
-          :class="{ 'animate__animated animate__shakeX': anyEdits && numSuggestionsLeft === 0 }"
-          @click="showPublish ? openSaveDialog(-1) : emit('close')"
-        >
-          Publish {{ numEdits }} {{ numEdits === 1 ? 'change' : 'changes' }}
-        </CdxButton>
-      </Transition>
-      <Transition v-if="showPublish2" name="card-confirm">
-        <CdxButton v-if="!anyEdits" key="edit-full" weight="quiet" size="large">
+      <template v-if="showPublish2">
+        <div class="edit-view__footer-slot">
+          <Transition name="footer-swap">
+            <CdxButton
+              v-if="anyEdits"
+              key="publish"
+              action="progressive"
+              weight="primary"
+              size="large"
+              class="edit-view__publish-button"
+              :class="{ 'animate__animated animate__shakeX': anyEdits && numSuggestionsLeft === 0 }"
+              @click="showPublish ? openSaveDialog(-1) : emit('close')"
+            >
+              Publish {{ numEdits }} {{ numEdits === 1 ? 'change' : 'changes' }}
+            </CdxButton>
+          </Transition>
+          <Transition name="footer-swap">
+            <CdxButton v-if="!anyEdits" key="edit-full" weight="quiet" size="large">
+              <CdxIcon :icon="cdxIconEdit" />
+              Edit full article
+            </CdxButton>
+          </Transition>
+        </div>
+      </template>
+      <template v-else>
+        <Transition name="card-confirm">
+          <CdxButton
+            v-if="anyEdits"
+            key="publish"
+            action="progressive"
+            weight="primary"
+            size="large"
+            class="edit-view__publish-button"
+            :class="{ 'animate__animated animate__shakeX': anyEdits && numSuggestionsLeft === 0 }"
+            @click="showPublish ? openSaveDialog(-1) : emit('close')"
+          >
+            Publish {{ numEdits }} {{ numEdits === 1 ? 'change' : 'changes' }}
+          </CdxButton>
+        </Transition>
+        <CdxButton weight="quiet" size="large">
           <CdxIcon :icon="cdxIconEdit" />
           Edit full article
         </CdxButton>
-      </Transition>
-      <CdxButton v-else weight="quiet" size="large">
-        <CdxIcon :icon="cdxIconEdit" />
-        Edit full article
-      </CdxButton>
+      </template>
     </footer>
 
     <SaveChangesDialog
@@ -388,6 +408,7 @@
     z-index: 200;
     display: flex;
     flex-direction: column;
+    overflow: clip;
     background-color: var(--background-color-neutral-subtle, #f8f9fa);
   }
 
@@ -616,7 +637,39 @@
     width: 100%;
   }
 
-  .edit-view__publish-button {
+  .edit-view__footer-slot {
+    display: grid;
+    width: 100%;
+  }
+
+  .footer-swap-enter-active {
+    transition: transform 350ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .footer-swap-leave-active {
+    transition: transform 450ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .footer-swap-enter-from,
+  .footer-swap-leave-to {
+    transform: translateY(100vh);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .footer-swap-enter-active,
+    .footer-swap-leave-active {
+      transition: opacity 200ms ease;
+      transform: none;
+    }
+
+    .footer-swap-enter-from,
+    .footer-swap-leave-to {
+      opacity: 0;
+    }
+  }
+
+  .edit-view__footer-slot > .cdx-button {
+    grid-area: 1 / 1;
     width: 100%;
   }
 </style>
