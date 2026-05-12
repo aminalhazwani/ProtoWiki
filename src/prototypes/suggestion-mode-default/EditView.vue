@@ -6,7 +6,7 @@
   import SaveChangesDialog from './SaveChangesDialog.vue'
 
   const props = defineProps<{ cards: CardData[], showPublish?: boolean, showPublish2?: boolean }>()
-  const emit = defineEmits<{ close: [] }>()
+  const emit = defineEmits<{ close: [], published: [] }>()
 
   type CardMode = 'default' | 'removing' | 'citing' | 'cited' | 'editing' | 'edited' | 'published'
 
@@ -21,6 +21,29 @@
     citationErrors.value = cards.map(() => false)
     editTexts.value = cards.map((c) => c.plainText ?? '')
   }, { immediate: true })
+
+  const isPublishing2 = ref(false)
+  let publish2Timeout: ReturnType<typeof setTimeout> | null = null
+
+  function startPublish2() {
+    isPublishing2.value = true
+    publish2Timeout = setTimeout(() => {
+      isPublishing2.value = false
+      publish2Timeout = null
+      cardModes.value = cardModes.value.map(m =>
+        (m !== 'default' && m !== 'published') ? 'published' : m
+      )
+      emit('published')
+    }, 3000)
+  }
+
+  function cancelPublish2() {
+    if (publish2Timeout) {
+      clearTimeout(publish2Timeout)
+      publish2Timeout = null
+    }
+    isPublishing2.value = false
+  }
 
   const cardMenuSelected = ref<string | null>(null)
 
@@ -123,6 +146,7 @@
     resizeObservers.forEach(ro => ro.disconnect())
     cardIntersectionObserver?.disconnect()
     if (rafId !== null) cancelAnimationFrame(rafId)
+    if (publish2Timeout) clearTimeout(publish2Timeout)
   })
 
   function removedLinksHTML(html: string): string {
@@ -400,8 +424,11 @@
               weight="primary"
               size="large"
               class="edit-view__publish-button"
-              :class="{ 'animate__animated animate__shakeX': anyEdits && numSuggestionsLeft === 0 }"
-              @click="showPublish ? openSaveDialog(-1) : emit('close')"
+              :class="{
+                'animate__animated animate__shakeX': anyEdits && numSuggestionsLeft === 0,
+                'edit-view__publish-button--counting': isPublishing2
+              }"
+              @click="isPublishing2 ? cancelPublish2() : startPublish2()"
             >
               Publish {{ numEdits }} {{ numEdits === 1 ? 'change' : 'changes' }}
             </CdxButton>
@@ -413,6 +440,11 @@
             </CdxButton>
           </Transition>
         </div>
+        <Transition name="footer-swap">
+          <CdxButton v-if="isPublishing2" key="cancel2" weight="quiet" size="large" @click="cancelPublish2">
+            Cancel
+          </CdxButton>
+        </Transition>
       </template>
       <template v-else>
         <Transition name="card-confirm">
@@ -437,7 +469,7 @@
     </footer>
 
     <SaveChangesDialog
-      v-if="showPublish"
+      v-if="showPublish && !showPublish2"
       :open="saveDialogOpen"
       :initial-summary="saveDialogSummary"
       :change-count="numEdits"
@@ -684,6 +716,16 @@
     width: 100%;
   }
 
+  .edit-view__publish-button--counting {
+    background-image: linear-gradient(
+      var(--background-color-progressive--active),
+      var(--background-color-progressive--active)
+    );
+    background-repeat: no-repeat;
+    background-position: left center;
+    animation: publish-countdown 3s linear forwards;
+  }
+
   .edit-view__footer-slot {
     display: grid;
     width: 100%;
@@ -729,6 +771,11 @@
   .animate__animated {
     animation-duration: var(--animate-duration);
     animation-fill-mode: both;
+  }
+
+  @keyframes publish-countdown {
+    from { background-size: 100% 100%; }
+    to { background-size: 0% 100%; }
   }
 
   @keyframes shakeX {

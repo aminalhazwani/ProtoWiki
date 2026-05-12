@@ -9,13 +9,20 @@
   })
 
   import { CdxButton, CdxIcon, CdxMessage, CdxAccordion } from '@wikimedia/codex'
-  import { cdxIconUserAvatarOutline } from '@wikimedia/codex-icons'
+  import { cdxIconUserAvatarOutline, cdxIconSuccess } from '@wikimedia/codex-icons'
   import Article from '@/components/Article.vue'
   import ChromeWrapper from '@/components/ChromeWrapper.vue'
   import EditView from './EditView.vue'
   import type { CardData } from './types'
 
   const editViewOpen = ref(false)
+  const publishSuccess = ref(false)
+
+  function onPublished() {
+    editViewOpen.value = false
+    publishSuccess.value = true
+    setTimeout(() => { publishSuccess.value = false }, 1000)
+  }
   const editViewCards = ref<CardData[]>([])
   const cardMapRef = ref(new Map<string, CardData>())
   const containerRef = ref<HTMLElement | null>(null)
@@ -710,7 +717,14 @@
     </div>
   </ChromeWrapper>
   <Transition name="edit-view">
-    <EditView v-if="editViewOpen" :cards="editViewCards" :show-publish="showPublish || showPublish2" :show-publish2="showPublish2" @close="editViewOpen = false" />
+    <EditView v-if="editViewOpen" :cards="editViewCards" :show-publish="showPublish || showPublish2" :show-publish2="showPublish2" @close="editViewOpen = false" @published="onPublished" />
+  </Transition>
+  <Transition name="hatnote-toast">
+    <div v-if="publishSuccess" class="protowiki-publish-success">
+      <CdxMessage type="success" :icon="cdxIconSuccess" :allow-user-dismiss="true" @user-dismissed="publishSuccess = false">
+        Your edit was published
+      </CdxMessage>
+    </div>
   </Transition>
   <Transition name="hatnote-toast">
     <div v-if="showHatnoteToast && visibleCount > 0" class="protowiki-hatnote-toast">
@@ -977,6 +991,14 @@
 
   :deep(.protowiki-hatnote__action) {
     color: var(--color-progressive);
+  }
+
+  .protowiki-publish-success {
+    position: fixed;
+    bottom: var(--spacing-100, 16px);
+    left: var(--spacing-100, 16px);
+    right: var(--spacing-100, 16px);
+    z-index: 300;
   }
 
   .protowiki-hatnote-toast {
