@@ -17,9 +17,15 @@ definePage({
 const feedbackUrl = 'https://en.wikipedia.org/wiki/Wikipedia:Feedback'
 const policiesUrl = 'https://en.wikipedia.org/wiki/Wikipedia:List_of_policies'
 
-const primaryPlaceholder = 'Main column — module body content goes here.'
-const sidebarPlaceholderA = 'First sidebar module — replace with your UI.'
-const sidebarPlaceholderB = 'Second sidebar module — replace with your UI.'
+/** Shared across mobile + desktop for each matching module */
+const MODULE = {
+  thankTitle: 'Thank collaborators',
+  thankBody: 'No recent edits in scope.',
+  impactTitle: 'Your impact',
+  policiesTitle: 'Policies',
+  policiesBody:
+    'Opens Wikipedia in a new tab — replace with your module content.',
+} as const
 </script>
 
 <template>
@@ -43,21 +49,29 @@ const sidebarPlaceholderB = 'Second sidebar module — replace with your UI.'
             <DashboardModule
               class="dashboard-slot--mobile-primary"
               to="/chrome-template"
-              title="Thank collaborators"
+              :title="MODULE.thankTitle"
               cta-label="Open module"
             >
-              <p class="dashboard-template-placeholder">No recent edits in scope.</p>
+              <p class="dashboard-template-placeholder">{{ MODULE.thankBody }}</p>
             </DashboardModule>
 
-            <DashboardModule class="dashboard-slot--mobile-sidebar" title="Your impact">
+            <DashboardModule class="dashboard-slot--mobile-sidebar" :title="MODULE.impactTitle">
               <div class="dashboard-impact-rows">
                 <div class="dashboard-impact-row">
-                  <CdxIcon :icon="cdxIconUserTalk" size="small" class="dashboard-impact-icon" />
+                  <CdxIcon
+                    :icon="cdxIconUserTalk"
+                    size="small"
+                    class="dashboard-impact-icon"
+                  />
                   <span class="dashboard-impact-metric">—</span>
                   <span>Thanks sent.</span>
                 </div>
                 <div class="dashboard-impact-row">
-                  <CdxIcon :icon="cdxIconCheck" size="small" class="dashboard-impact-icon" />
+                  <CdxIcon
+                    :icon="cdxIconCheck"
+                    size="small"
+                    class="dashboard-impact-icon"
+                  />
                   <span class="dashboard-impact-metric">—</span>
                   <span>Edits completed.</span>
                 </div>
@@ -66,30 +80,50 @@ const sidebarPlaceholderB = 'Second sidebar module — replace with your UI.'
 
             <DashboardModule
               :href="policiesUrl"
-              title="Policies (example)"
-              cta-label="View on Wikipedia"
+              :title="MODULE.policiesTitle"
+              hide-cta
             >
-              <p class="dashboard-template-placeholder">
-                Opens Wikipedia in a new tab — replace with your module content.
-              </p>
+              <p class="dashboard-template-placeholder">{{ MODULE.policiesBody }}</p>
             </DashboardModule>
           </template>
 
           <template #primary>
-            <DashboardModule title="Primary module slot">
-              <p class="dashboard-template-placeholder">{{ primaryPlaceholder }}</p>
+            <DashboardModule :title="MODULE.thankTitle">
+              <p class="dashboard-template-placeholder">{{ MODULE.thankBody }}</p>
             </DashboardModule>
           </template>
 
           <template #sidebar>
-            <DashboardModule class="dashboard-slot--desktop-sidebar" title="Sidebar module slot">
-              <p class="dashboard-template-placeholder">{{ sidebarPlaceholderA }}</p>
+            <DashboardModule
+              class="dashboard-slot--desktop-sidebar"
+              :title="MODULE.impactTitle"
+            >
+              <div class="dashboard-impact-rows">
+                <div class="dashboard-impact-row">
+                  <CdxIcon
+                    :icon="cdxIconUserTalk"
+                    size="small"
+                    class="dashboard-impact-icon"
+                  />
+                  <span class="dashboard-impact-metric">—</span>
+                  <span>Thanks sent.</span>
+                </div>
+                <div class="dashboard-impact-row">
+                  <CdxIcon
+                    :icon="cdxIconCheck"
+                    size="small"
+                    class="dashboard-impact-icon"
+                  />
+                  <span class="dashboard-impact-metric">—</span>
+                  <span>Edits completed.</span>
+                </div>
+              </div>
             </DashboardModule>
             <DashboardModule
               class="dashboard-slot--desktop-secondary"
-              title="Secondary module slot"
+              :title="MODULE.policiesTitle"
             >
-              <p class="dashboard-template-placeholder">{{ sidebarPlaceholderB }}</p>
+              <p class="dashboard-template-placeholder">{{ MODULE.policiesBody }}</p>
             </DashboardModule>
           </template>
         </Dashboard>

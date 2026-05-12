@@ -17,9 +17,15 @@ interface Props {
   href?: string
   /**
    * Label for the bottom **`.mobile-card__button`** strip when **`to`** or **`href`** is set.
-   * Override with the **`#cta`** slot for custom content.
+   * Omit **`ctaLabel`** (and **`#cta`**) for a link card with no blue strip — the row stays tappable.
+   * Override with the **`#cta`** slot for custom strip content.
    */
   ctaLabel?: string
+  /**
+   * When **`true`**, the progressive CTA row is not rendered (link /RouterLink behavior unchanged).
+   * Prefer omitting **`ctaLabel`** / **`#cta`**; use this to explicitly suppress the strip.
+   */
+  hideCta?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -27,6 +33,7 @@ const props = withDefaults(defineProps<Props>(), {
   to: undefined,
   href: undefined,
   ctaLabel: undefined,
+  hideCta: false,
 })
 
 function trimmedTitle(): string {
@@ -49,7 +56,7 @@ function trimmedTitle(): string {
     <div class="mobile-card__content mobile-card__content--preview dashboard-module__body">
       <slot />
     </div>
-    <slot name="cta">
+    <slot v-if="!props.hideCta" name="cta">
       <span v-if="props.ctaLabel?.trim()" class="mobile-card__button">{{ props.ctaLabel }}</span>
     </slot>
   </RouterLink>
@@ -68,7 +75,7 @@ function trimmedTitle(): string {
     <div class="mobile-card__content mobile-card__content--preview dashboard-module__body">
       <slot />
     </div>
-    <slot name="cta">
+    <slot v-if="!props.hideCta" name="cta">
       <span v-if="props.ctaLabel?.trim()" class="mobile-card__button">{{ props.ctaLabel }}</span>
     </slot>
   </a>

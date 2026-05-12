@@ -149,4 +149,9 @@ const slots = useSlots()
   min-height: 4rem;
   box-sizing: border-box;
 }
+
+/* Static modules use `.sidebar-card__title` (18px); tappable rows use `.mobile-card__title` (16px) — unify in the mobile stack only. */
+.dashboard-mobile-cards .sidebar-card__title {
+  font-size: 16px;
+}
 </style>
