@@ -12,11 +12,13 @@
 
   const cardModes = ref<CardMode[]>([])
   const citationInputs = ref<string[]>([])
+  const citationErrors = ref<boolean[]>([])
   const editTexts = ref<string[]>([])
 
   watch(() => props.cards, (cards) => {
     cardModes.value = cards.map(() => 'default')
     citationInputs.value = cards.map(() => '')
+    citationErrors.value = cards.map(() => false)
     editTexts.value = cards.map((c) => c.plainText ?? '')
   }, { immediate: true })
 
@@ -209,7 +211,10 @@
 
   function handleCited(idx: number) {
     if (citationInputs.value[idx].trim()) {
+      citationErrors.value[idx] = false
       cardModes.value[idx] = 'cited'
+    } else {
+      citationErrors.value[idx] = true
     }
   }
 
@@ -221,6 +226,7 @@
 
   function handleRevert(idx: number) {
     cardModes.value[idx] = 'default'
+    citationErrors.value[idx] = false
   }
 
   function handleContinue(idx: number) {
@@ -312,9 +318,18 @@
                     <CdxIcon :icon="cdxIconClose" />
                   </CdxButton>
                 </div>
-                <CdxField class="card__citation-field">
+                <CdxField
+                  class="card__citation-field"
+                  :status="citationErrors[i] ? 'error' : 'default'"
+                  :messages="{ error: 'Enter a website or ISBN' }"
+                >
                   <template #label>Website or ISBN</template>
-                  <CdxTextInput v-model="citationInputs[i]" placeholder="https://example.com/source" input-type="url" />
+                  <CdxTextInput
+                    v-model="citationInputs[i]"
+                    placeholder="https://example.com/source"
+                    input-type="url"
+                    @input="citationErrors[i] = false"
+                  />
                 </CdxField>
                 <div class="card__actions">
                   <CdxButton @click="handleCited(i)">Add citation</CdxButton>
