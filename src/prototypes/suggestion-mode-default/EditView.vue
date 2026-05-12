@@ -66,6 +66,14 @@
   const numEdits = computed(() => cardModes.value.filter(m => !['default', 'published', 'citing', 'editing'].includes(m)).length)
   const numSuggestionsLeft = computed(() => cardModes.value.filter(m => ['default', 'citing', 'editing'].includes(m)).length)
 
+  const activeCardPosition = computed(() => {
+    let count = 0
+    for (let i = 0; i <= activeCardIndex.value; i++) {
+      if (['default', 'citing', 'editing'].includes(cardModes.value[i])) count++
+    }
+    return Math.max(count, 1)
+  })
+
   const bottomHeights = ref<number[]>([])
   const resizeObservers: ResizeObserver[] = []
   let rafId: number | null = null
@@ -94,10 +102,24 @@
       resizeObservers[i] = ro
     })
     scheduleHeightUpdate()
+
+    if (carousel) {
+      cardIntersectionObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const idx = Array.from(carousel.children).indexOf(entry.target as HTMLElement)
+            if (idx !== -1) activeCardIndex.value = idx
+          }
+        }
+      }, { root: carousel, threshold: 0.5 })
+
+      Array.from(carousel.children).forEach(card => cardIntersectionObserver!.observe(card as HTMLElement))
+    }
   })
 
   onUnmounted(() => {
     resizeObservers.forEach(ro => ro.disconnect())
+    cardIntersectionObserver?.disconnect()
     if (rafId !== null) cancelAnimationFrame(rafId)
   })
 
@@ -210,6 +232,8 @@
   }
 
   const carouselRef = ref<HTMLElement | null>(null)
+  const activeCardIndex = ref(0)
+  let cardIntersectionObserver: IntersectionObserver | null = null
 
   function is(idx: number, ...modes: CardMode[]) {
     return modes.includes(cardModes.value[idx])
@@ -230,7 +254,7 @@
       </CdxButton>
     </header>
     <p v-if="numSuggestionsLeft > 0" class="edit-view__suggestion-count">
-      {{ numSuggestionsLeft }} edit suggestion{{ numSuggestionsLeft === 1 ? '' : 's' }}
+      {{ activeCardPosition }} of {{ numSuggestionsLeft }} suggestion{{ numSuggestionsLeft === 1 ? '' : 's' }}
     </p>
     <div class="edit-view__body">
       <div ref="carouselRef" class="edit-view__carousel">
@@ -283,9 +307,9 @@
 
               <div v-else-if="is(i, 'citing')" key="citing" class="card__instructions">
                 <p class="card__instructions-title">Add a citation</p>
-                <p class="card__instructions-description">Paste a URL or enter a reference.</p>
+                <!-- <p class="card__instructions-description">Paste a URL or enter a reference.</p> -->
                 <CdxField class="card__citation-field">
-                  <template #label>Citation URL or reference</template>
+                  <template #label>Website or ISBN</template>
                   <CdxTextInput v-model="citationInputs[i]" placeholder="https://example.com/source" input-type="url" />
                 </CdxField>
                 <div class="card__actions">
@@ -519,11 +543,6 @@
     background-color: var(--background-color-neutral);
   }
 
-  .card__instructions-title {
-    margin: 0 0 var(--spacing-50, 8px);
-    font-weight: var(--font-weight-bold, 700);
-  }
-
   .card__instructions-description {
     margin: 0 0 var(--spacing-75, 12px);
     color: var(--color-base, #202122);
@@ -547,12 +566,14 @@
 
   .card__instructions-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--spacing-75, 12px);
+    justify-content: space-between;
   }
 
-  .card__instructions-header .card__instructions-title {
-    margin: 0;
+  .card__instructions-title {
+    margin: var(--spacing-12, 2px) 0 0 0;
+    font-weight: var(--font-weight-bold, 700);
     flex: 1;
   }
 
@@ -590,7 +611,11 @@
   }
 
   .card__citation-field, .card__edit-field {
-    margin-bottom: var(--spacing-100, 16px);
+    margin: 0 0 var(--spacing-100, 16px) 0;
+  }
+
+  .card__citation-field :deep(.cdx-label__label__text) {
+    font-weight: 400;
   }
 
   .card__edit-textarea {
