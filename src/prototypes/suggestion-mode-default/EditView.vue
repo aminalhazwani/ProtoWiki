@@ -306,20 +306,28 @@
               </div>
 
               <div v-else-if="is(i, 'citing')" key="citing" class="card__instructions">
-                <p class="card__instructions-title">Add a citation</p>
-                <!-- <p class="card__instructions-description">Paste a URL or enter a reference.</p> -->
+                <div class="card__instructions-header">
+                  <p class="card__instructions-title">Add a citation</p>
+                  <CdxButton weight="quiet" class="card__instructions-menu" aria-label="Cancel" @click="handleRevert(i)">
+                    <CdxIcon :icon="cdxIconClose" />
+                  </CdxButton>
+                </div>
                 <CdxField class="card__citation-field">
                   <template #label>Website or ISBN</template>
                   <CdxTextInput v-model="citationInputs[i]" placeholder="https://example.com/source" input-type="url" />
                 </CdxField>
                 <div class="card__actions">
-                  <CdxButton action="progressive" weight="primary" :disabled="citingDisabled(i)" @click="handleCited(i)">Add citation</CdxButton>
-                  <CdxButton weight="quiet" @click="handleRevert(i)">Cancel</CdxButton>
+                  <CdxButton @click="handleCited(i)">Add citation</CdxButton>
                 </div>
               </div>
 
               <div v-else-if="is(i, 'editing')" key="editing" class="card__instructions">
-                <p class="card__instructions-title">Edit content</p>
+                <div class="card__instructions-header">
+                  <p class="card__instructions-title">Edit content</p>
+                  <CdxButton weight="quiet" class="card__instructions-menu" aria-label="Cancel" @click="handleRevert(i)">
+                    <CdxIcon :icon="cdxIconClose" />
+                  </CdxButton>
+                </div>
                 <p class="card__instructions-description">Remove or rewrite any inaccurate text.</p>
                 <CdxField class="card__edit-field">
                   <template #label>Article text</template>
@@ -327,7 +335,6 @@
                 </CdxField>
                 <div class="card__actions">
                   <CdxButton action="progressive" weight="primary" :disabled="aiEditDisabled(i)" @click="handleEdited(i)">Apply edit</CdxButton>
-                  <CdxButton weight="quiet" @click="handleRevert(i)">Cancel</CdxButton>
                 </div>
               </div>
 
