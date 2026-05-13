@@ -335,7 +335,7 @@
           <div
             class="card__preview"
             :style="{ paddingBottom: `calc(${bottomHeights[i] ?? 0}px + var(--spacing-100, 16px))` }"
-            :class="{ 'card__preview--removing': is(i, 'removing', 'published'), 'card__preview--done': is(i, 'published') }"
+            :class="{ 'card__preview--removing': is(i, 'removing', 'published'), 'card__preview--done': is(i, 'published'), 'card__preview--rejected': is(i, 'rejected') }"
             v-html="resolvedPreviewHTML(card, i)"
           />
           <div class="card__bottom">
@@ -650,6 +650,10 @@
 
   .card__preview :deep(.card__preview-duplicate) {
     background-color: var(--background-color-warning-subtle, #fef6e7);
+  }
+
+  .card__preview--rejected :deep(.card__preview-duplicate) {
+    background-color: transparent;
   }
 
   .card__preview :deep(blockquote) {
