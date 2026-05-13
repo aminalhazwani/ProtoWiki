@@ -1,14 +1,14 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
   import { CdxButton, CdxIcon, CdxField, CdxTextInput, CdxTextArea, CdxMenuButton, CdxRadio, CdxMessage } from '@wikimedia/codex'
-  import { cdxIconClose, cdxIconEdit, cdxIconEllipsis, cdxIconCheck, cdxIconSuccess, cdxIconUndo } from '@wikimedia/codex-icons'
+  import { cdxIconClose, cdxIconEdit, cdxIconEllipsis, cdxIconCheck, cdxIconSuccess, cdxIconUndo, cdxIconClear } from '@wikimedia/codex-icons'
   import type { CardData } from './types'
   import SaveChangesDialog from './SaveChangesDialog.vue'
 
   const props = defineProps<{ cards: CardData[], showPublish?: boolean, showPublish2?: boolean }>()
   const emit = defineEmits<{ close: [], published: [] }>()
 
-  type CardMode = 'default' | 'removing' | 'citing' | 'cited' | 'editing' | 'edited' | 'published' | 'rejecting'
+  type CardMode = 'default' | 'removing' | 'citing' | 'cited' | 'editing' | 'edited' | 'published' | 'rejecting' | 'rejected'
 
   const cardModes = ref<CardMode[]>([])
   const citationInputs = ref<string[]>([])
@@ -112,14 +112,17 @@
     emit('close')
   }
 
-  const anyEdits = computed(() => cardModes.value.some(m => !['default', 'published', 'citing', 'editing', 'rejecting'].includes(m)))
-  const numEdits = computed(() => cardModes.value.filter(m => !['default', 'published', 'citing', 'editing', 'rejecting'].includes(m)).length)
-  const numSuggestionsLeft = computed(() => cardModes.value.filter(m => ['default', 'citing', 'editing', 'rejecting'].includes(m)).length)
+  const INACTIVE_MODES: CardMode[] = ['default', 'published', 'citing', 'editing', 'rejecting']
+  const ACTIVE_MODES: CardMode[] = ['default', 'citing', 'editing', 'rejecting']
+
+  const anyEdits = computed(() => cardModes.value.some(m => !INACTIVE_MODES.includes(m)))
+  const numEdits = computed(() => cardModes.value.filter(m => !INACTIVE_MODES.includes(m)).length)
+  const numSuggestionsLeft = computed(() => cardModes.value.filter(m => ACTIVE_MODES.includes(m)).length)
 
   const activeCardPosition = computed(() => {
     let count = 0
     for (let i = 0; i <= activeCardIndex.value; i++) {
-      if (['default', 'citing', 'editing', 'rejecting'].includes(cardModes.value[i])) count++
+      if (ACTIVE_MODES.includes(cardModes.value[i])) count++
     }
     return Math.max(count, 1)
   })
@@ -290,7 +293,7 @@
       return
     }
     console.log('Rejection reason:', card.type, rejectionSelections.value[idx])
-    handleRevert(idx)
+    cardModes.value[idx] = 'rejected'
   }
 
   function handleContinue(idx: number) {
@@ -375,6 +378,16 @@
                 </div>
               </div>
 
+              <div v-else-if="is(i, 'rejected')" key="rejected" class="card__message card__message--error">
+                <CdxIcon :icon="cdxIconClear" class="card__message-icon" />
+                <span class="card__message-label">{{ titleFor(card.type) }}</span>
+                <div class="card__message-actions">
+                  <CdxButton weight="quiet" size="small" aria-label="Undo" @click="handleRevert(i)">
+                    <CdxIcon :icon="cdxIconUndo" />
+                  </CdxButton>
+                </div>
+              </div>
+
               <div v-else-if="is(i, 'citing')" key="citing" class="card__instructions">
                 <div class="card__instructions-header">
                   <p class="card__instructions-title">Add a citation</p>
@@ -440,7 +453,7 @@
                   </CdxMessage>
                 </div>
                 <div class="card__actions">
-                  <CdxButton action="progressive" @click="handleRejectSubmit(card, i)">Submit</CdxButton>
+                  <CdxButton action="progressive" weight="primary" @click="handleRejectSubmit(card, i)">Submit</CdxButton>
                 </div>
               </div>
 
@@ -704,7 +717,7 @@
 
   .card__message {
     display: flex;
-    align-items: center;
+    align-items: normal;
     gap: var(--spacing-50, 8px);
     padding: var(--spacing-100, 16px);
     background-color: var(--background-color-success-subtle);
@@ -717,6 +730,7 @@
 
   .card__message-label {
     font-weight: var(--font-weight-bold, 700);
+    line-height: var(--line-height-small);
     flex: 1;
   }
 
@@ -727,6 +741,15 @@
     margin-inline-start: auto;
   }
 
+  .card__message--error {
+    background-color: var(--background-color-error-subtle);
+    color: var(--color-error);
+  }
+
+  .card__message--error .card__message-icon {
+    color: var(--color-icon-error);
+  }
+
   .card__message-undo {
     color: var(--color-neutral);
   }
@@ -734,7 +757,6 @@
   .card__rejection-options {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-50, 8px);
     margin-bottom: var(--spacing-100, 16px);
   }
 
