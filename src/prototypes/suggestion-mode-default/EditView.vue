@@ -112,7 +112,7 @@
     emit('close')
   }
 
-  const INACTIVE_MODES: CardMode[] = ['default', 'published', 'citing', 'editing', 'rejecting']
+  const INACTIVE_MODES: CardMode[] = ['default', 'published', 'citing', 'editing', 'rejecting', 'rejected']
   const ACTIVE_MODES: CardMode[] = ['default', 'citing', 'editing', 'rejecting']
 
   const anyEdits = computed(() => cardModes.value.some(m => !INACTIVE_MODES.includes(m)))
@@ -347,7 +347,7 @@
 
               <div v-else-if="is(i, 'removing')" key="removing" class="card__message">
                 <CdxIcon :icon="showPublish2 ? cdxIconSuccess : cdxIconCheck" class="card__message-icon" />
-                <span class="card__message-label">Remove duplicate link</span>
+                <span class="card__message-label">{{ titleFor(card.type) }}</span>
                 <div class="card__message-actions">
                   <CdxButton weight="quiet" size="small" aria-label="Undo" @click="handleRevert(i)">
                     <CdxIcon :icon="cdxIconUndo" />
@@ -510,7 +510,7 @@
               }"
               @click="isPublishing2 ? cancelPublish2() : startPublish2()"
             >
-              Publish {{ numEdits }} {{ numEdits === 1 ? 'change' : 'changes' }}
+              Publish {{ numEdits }} {{ numEdits === 1 ? 'edit' : 'edits' }}
             </CdxButton>
           </Transition>
           <Transition name="footer-swap">
@@ -538,7 +538,7 @@
             :class="{ 'animate__animated animate__shakeX': anyEdits && numSuggestionsLeft === 0 }"
             @click="showPublish ? openSaveDialog(-1) : emit('close')"
           >
-            Publish {{ numEdits }} {{ numEdits === 1 ? 'change' : 'changes' }}
+            Publish {{ numEdits }} {{ numEdits === 1 ? 'edit' : 'edits' }}
           </CdxButton>
         </Transition>
         <CdxButton weight="quiet" size="large">
