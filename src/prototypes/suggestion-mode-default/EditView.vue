@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
-  import { CdxButton, CdxIcon, CdxField, CdxTextInput, CdxTextArea, CdxMenuButton } from '@wikimedia/codex'
+  import { CdxButton, CdxIcon, CdxField, CdxTextInput, CdxTextArea, CdxMenuButton, CdxRadio, CdxMessage } from '@wikimedia/codex'
   import { cdxIconClose, cdxIconEdit, cdxIconEllipsis, cdxIconCheck, cdxIconSuccess, cdxIconUndo } from '@wikimedia/codex-icons'
   import type { CardData } from './types'
   import SaveChangesDialog from './SaveChangesDialog.vue'
@@ -8,18 +8,22 @@
   const props = defineProps<{ cards: CardData[], showPublish?: boolean, showPublish2?: boolean }>()
   const emit = defineEmits<{ close: [], published: [] }>()
 
-  type CardMode = 'default' | 'removing' | 'citing' | 'cited' | 'editing' | 'edited' | 'published'
+  type CardMode = 'default' | 'removing' | 'citing' | 'cited' | 'editing' | 'edited' | 'published' | 'rejecting'
 
   const cardModes = ref<CardMode[]>([])
   const citationInputs = ref<string[]>([])
   const citationErrors = ref<boolean[]>([])
   const editTexts = ref<string[]>([])
+  const rejectionSelections = ref<string[]>([])
+  const rejectionErrors = ref<boolean[]>([])
 
   watch(() => props.cards, (cards) => {
     cardModes.value = cards.map(() => 'default')
     citationInputs.value = cards.map(() => '')
     citationErrors.value = cards.map(() => false)
     editTexts.value = cards.map((c) => c.plainText ?? '')
+    rejectionSelections.value = cards.map(() => '')
+    rejectionErrors.value = cards.map(() => false)
   }, { immediate: true })
 
   const isPublishing2 = ref(false)
@@ -43,6 +47,27 @@
       publish2Timeout = null
     }
     isPublishing2.value = false
+  }
+
+  const REJECTION_OPTIONS: Record<string, { label: string; value: string }[]> = {
+    'remove-duplicate': [
+      { label: 'The link appears only once in this section', value: 'appears-once' },
+      { label: 'The link is useful here for readers', value: 'useful-here' },
+      { label: "I'm not sure what a duplicate link is", value: 'not-sure' },
+      { label: 'None of these', value: 'none' },
+    ],
+    'add-citation': [
+      { label: 'This information is widely known', value: 'widely-known' },
+      { label: 'A citation already exists nearby', value: 'citation-nearby' },
+      { label: "This section doesn't need a citation", value: 'no-citation-needed' },
+      { label: 'None of these', value: 'none' },
+    ],
+    'ai-content': [
+      { label: 'This text was written by a human editor', value: 'human-written' },
+      { label: 'The content is accurate and encyclopedic', value: 'accurate' },
+      { label: "I'm not sure how to check this", value: 'not-sure' },
+      { label: 'None of these', value: 'none' },
+    ],
   }
 
   const cardMenuSelected = ref<string | null>(null)
@@ -87,14 +112,14 @@
     emit('close')
   }
 
-  const anyEdits = computed(() => cardModes.value.some(m => !['default', 'published', 'citing', 'editing'].includes(m)))
-  const numEdits = computed(() => cardModes.value.filter(m => !['default', 'published', 'citing', 'editing'].includes(m)).length)
-  const numSuggestionsLeft = computed(() => cardModes.value.filter(m => ['default', 'citing', 'editing'].includes(m)).length)
+  const anyEdits = computed(() => cardModes.value.some(m => !['default', 'published', 'citing', 'editing', 'rejecting'].includes(m)))
+  const numEdits = computed(() => cardModes.value.filter(m => !['default', 'published', 'citing', 'editing', 'rejecting'].includes(m)).length)
+  const numSuggestionsLeft = computed(() => cardModes.value.filter(m => ['default', 'citing', 'editing', 'rejecting'].includes(m)).length)
 
   const activeCardPosition = computed(() => {
     let count = 0
     for (let i = 0; i <= activeCardIndex.value; i++) {
-      if (['default', 'citing', 'editing'].includes(cardModes.value[i])) count++
+      if (['default', 'citing', 'editing', 'rejecting'].includes(cardModes.value[i])) count++
     }
     return Math.max(count, 1)
   })
@@ -253,6 +278,21 @@
     citationErrors.value[idx] = false
   }
 
+  function handleReject(idx: number) {
+    cardModes.value[idx] = 'rejecting'
+    rejectionSelections.value[idx] = ''
+    rejectionErrors.value[idx] = false
+  }
+
+  function handleRejectSubmit(card: CardData, idx: number) {
+    if (!rejectionSelections.value[idx]) {
+      rejectionErrors.value[idx] = true
+      return
+    }
+    console.log('Rejection reason:', card.type, rejectionSelections.value[idx])
+    handleRevert(idx)
+  }
+
   function handleContinue(idx: number) {
     const nextIdx = idx + 1
     if (nextIdx >= props.cards.length) return
@@ -377,6 +417,33 @@
                 </div>
               </div>
 
+              <div v-else-if="is(i, 'rejecting')" key="rejecting" class="card__instructions">
+                <div class="card__instructions-header">
+                  <p class="card__instructions-title">Why did you reject this?</p>
+                  <CdxButton weight="quiet" class="card__instructions-menu" aria-label="Close" @click="handleRevert(i)">
+                    <CdxIcon :icon="cdxIconClose" />
+                  </CdxButton>
+                </div>
+                <div class="card__rejection-options">
+                  <CdxRadio
+                    v-for="option in REJECTION_OPTIONS[card.type]"
+                    :key="option.value"
+                    v-model="rejectionSelections[i]"
+                    :input-value="option.value"
+                    :name="`rejection-${i}`"
+                    @update:model-value="rejectionErrors[i] = false"
+                  >
+                    {{ option.label }}
+                  </CdxRadio>
+                  <CdxMessage v-if="rejectionErrors[i]" type="error" :inline="true">
+                    Select an option to continue.
+                  </CdxMessage>
+                </div>
+                <div class="card__actions">
+                  <CdxButton action="progressive" @click="handleRejectSubmit(card, i)">Submit</CdxButton>
+                </div>
+              </div>
+
               <div v-else key="instructions" class="card__instructions">
                 <div class="card__instructions-header">
                   <p class="card__instructions-title">{{ titleFor(card.type) }}</p>
@@ -394,7 +461,7 @@
                 <div class="card__actions">
                   <template v-if="showPublish2">
                     <CdxButton @click="handlePrimaryAction(card, i)">Accept</CdxButton>
-                    <CdxButton>Reject</CdxButton>
+                    <CdxButton @click="handleReject(i)">Reject</CdxButton>
                   </template>
                   <template v-else>
                     <CdxButton action="progressive" weight="primary" @click="handlePrimaryAction(card, i)">
@@ -662,6 +729,13 @@
 
   .card__message-undo {
     color: var(--color-neutral);
+  }
+
+  .card__rejection-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-50, 8px);
+    margin-bottom: var(--spacing-100, 16px);
   }
 
   .card__citation-field, .card__edit-field {
