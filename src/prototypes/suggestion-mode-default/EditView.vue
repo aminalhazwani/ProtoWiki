@@ -520,11 +520,13 @@
             </CdxButton>
           </Transition>
         </div>
-        <Transition name="footer-swap">
-          <CdxButton v-if="isPublishing2" key="cancel2" weight="quiet" size="large" @click="cancelPublish2">
-            Cancel
-          </CdxButton>
-        </Transition>
+        <div class="edit-view__footer-cancel" :class="{ 'edit-view__footer-cancel--open': isPublishing2 }">
+          <div>
+            <CdxButton weight="quiet" size="large" @click="cancelPublish2">
+              Cancel
+            </CdxButton>
+          </div>
+        </div>
       </template>
       <template v-else>
         <Transition name="card-confirm">
@@ -824,6 +826,26 @@
 
   .edit-view__footer-slot {
     display: grid;
+    width: 100%;
+  }
+
+  .edit-view__footer-cancel {
+    display: grid;
+    grid-template-rows: 0fr;
+    width: 100%;
+    transition: grid-template-rows 350ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .edit-view__footer-cancel--open {
+    grid-template-rows: 1fr;
+  }
+
+  .edit-view__footer-cancel > div {
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .edit-view__footer-cancel .cdx-button {
     width: 100%;
   }
 
