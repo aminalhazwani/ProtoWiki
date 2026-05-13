@@ -327,7 +327,7 @@
       </CdxButton>
     </header>
     <p v-if="numSuggestionsLeft > 0" class="edit-view__suggestion-count">
-      {{ activeCardPosition }} of {{ numSuggestionsLeft }} suggestion{{ numSuggestionsLeft === 1 ? '' : 's' }}
+      {{ numSuggestionsLeft }} suggestion{{ numSuggestionsLeft === 1 ? '' : 's' }}
     </p>
     <div class="edit-view__body">
       <div ref="carouselRef" class="edit-view__carousel">
