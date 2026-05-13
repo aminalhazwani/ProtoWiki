@@ -9,7 +9,7 @@
   })
 
   import { CdxButton, CdxIcon, CdxMessage, CdxAccordion } from '@wikimedia/codex'
-  import { cdxIconUserAvatarOutline } from '@wikimedia/codex-icons'
+  import { cdxIconUserAvatarOutline, cdxIconCheck } from '@wikimedia/codex-icons'
   import Article from '@/components/Article.vue'
   import ChromeWrapper from '@/components/ChromeWrapper.vue'
   import EditView from './EditView.vue'
@@ -720,7 +720,7 @@
   </Transition>
   <Transition name="hatnote-toast">
     <div v-if="publishSuccess" class="protowiki-publish-success">
-      <CdxMessage type="success" :allow-user-dismiss="true" :auto-dismiss="3000" @user-dismissed="publishSuccess = false" @auto-dismissed="publishSuccess = false">
+      <CdxMessage type="success" :icon="cdxIconCheck" :allow-user-dismiss="true" :auto-dismiss="30000" @user-dismissed="publishSuccess = false" @auto-dismissed="publishSuccess = false">
         Your edit was published
       </CdxMessage>
     </div>
@@ -1027,11 +1027,11 @@
     color: #fff;
   }
 
-  :deep(.cdx-message__icon--vue) {
+  .protowiki-hatnote-toast :deep(.cdx-message__icon--vue) {
     display: none;
   }
 
-  :deep(.cdx-message__content) {
+  .protowiki-hatnote-toast :deep(.cdx-message__content) {
     margin-left: 0;
   }
 
