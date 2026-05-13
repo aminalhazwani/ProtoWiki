@@ -358,7 +358,7 @@
 
               <div v-else-if="is(i, 'cited')" key="cited" class="card__message">
                 <CdxIcon :icon="showPublish2 ? cdxIconSuccess : cdxIconCheck" class="card__message-icon" />
-                <span class="card__message-label">Added citation</span>
+                <span class="card__message-label">{{ titleFor(card.type) }}</span>
                 <div class="card__message-actions">
                   <CdxButton weight="quiet" size="small" aria-label="Undo" @click="handleRevert(i)">
                     <CdxIcon :icon="cdxIconUndo" />
@@ -369,7 +369,7 @@
 
               <div v-else-if="is(i, 'edited')" key="edited" class="card__message">
                 <CdxIcon :icon="showPublish2 ? cdxIconSuccess : cdxIconCheck" class="card__message-icon" />
-                <span class="card__message-label">Applied edit</span>
+                <span class="card__message-label">{{ titleFor(card.type) }}</span>
                 <div class="card__message-actions">
                   <CdxButton weight="quiet" size="small" aria-label="Undo" @click="handleRevert(i)">
                     <CdxIcon :icon="cdxIconUndo" />
@@ -453,7 +453,7 @@
                   </CdxMessage>
                 </div>
                 <div class="card__actions">
-                  <CdxButton action="progressive" weight="primary" @click="handleRejectSubmit(card, i)">Submit</CdxButton>
+                  <CdxButton action="progressive" weight="normal" @click="handleRejectSubmit(card, i)">Submit</CdxButton>
                 </div>
               </div>
 
