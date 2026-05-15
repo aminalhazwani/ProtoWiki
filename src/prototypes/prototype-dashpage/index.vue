@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { CdxIcon } from '@wikimedia/codex'
-import { cdxIconCheck, cdxIconUserTalk } from '@wikimedia/codex-icons'
 import { RouterLink } from 'vue-router'
 
 import ChromeWrapper from '@/components/ChromeWrapper.vue'
@@ -8,6 +6,7 @@ import Dashboard from '@/components/Dashboard.vue'
 import DashboardModule from '@/components/DashboardModule.vue'
 import SpecialPageWrapper from '@/components/SpecialPageWrapper.vue'
 import HelpModule from './HelpModule.vue'
+import ImpactModule from './ImpactModule.vue'
 import MentorModule from './MentorModule.vue'
 
 definePage({
@@ -42,7 +41,6 @@ const MENTOR = {
 const MODULE = {
   thankTitle: 'Contribute',
   thankBody: 'No suggestions (yet)',
-  impactTitle: 'Your impact',
   policiesTitle: 'Learn',
   policiesBody: 'Learn how to edit Wikipedia',
 } as const
@@ -79,28 +77,7 @@ const MODULE = {
               <p class="prototype-dashpage-placeholder">{{ MODULE.thankBody }}</p>
             </DashboardModule>
 
-            <DashboardModule class="dashboard-slot--mobile-sidebar" :title="MODULE.impactTitle">
-              <div class="prototype-dashpage-impact-rows">
-                <div class="prototype-dashpage-impact-row">
-                  <CdxIcon
-                    :icon="cdxIconUserTalk"
-                    size="small"
-                    class="prototype-dashpage-impact-icon"
-                  />
-                  <span class="prototype-dashpage-impact-metric">—</span>
-                  <span>Thanks sent.</span>
-                </div>
-                <div class="prototype-dashpage-impact-row">
-                  <CdxIcon
-                    :icon="cdxIconCheck"
-                    size="small"
-                    class="prototype-dashpage-impact-icon"
-                  />
-                  <span class="prototype-dashpage-impact-metric">—</span>
-                  <span>Edits completed.</span>
-                </div>
-              </div>
-            </DashboardModule>
+            <ImpactModule :to="HOME" />
 
             <DashboardModule
               :to="HOME"
@@ -129,31 +106,7 @@ const MODULE = {
               :conversations-href="MENTOR.conversationsHref"
             />
 
-            <DashboardModule
-              class="dashboard-slot--desktop-sidebar"
-              :title="MODULE.impactTitle"
-            >
-              <div class="prototype-dashpage-impact-rows">
-                <div class="prototype-dashpage-impact-row">
-                  <CdxIcon
-                    :icon="cdxIconUserTalk"
-                    size="small"
-                    class="prototype-dashpage-impact-icon"
-                  />
-                  <span class="prototype-dashpage-impact-metric">—</span>
-                  <span>Thanks sent.</span>
-                </div>
-                <div class="prototype-dashpage-impact-row">
-                  <CdxIcon
-                    :icon="cdxIconCheck"
-                    size="small"
-                    class="prototype-dashpage-impact-icon"
-                  />
-                  <span class="prototype-dashpage-impact-metric">—</span>
-                  <span>Edits completed.</span>
-                </div>
-              </div>
-            </DashboardModule>
+            <ImpactModule />
             <DashboardModule
               class="dashboard-slot--desktop-secondary"
               :title="MODULE.policiesTitle"
@@ -183,33 +136,6 @@ const MODULE = {
   color: var(--color-base--subtle, #54595d);
 }
 
-.prototype-dashpage-impact-rows {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-50, 8px);
-  font-size: 14px;
-  line-height: 1.4;
-  color: var(--color-base, #202122);
-}
-
-.prototype-dashpage-impact-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  column-gap: var(--spacing-50, 8px);
-  row-gap: var(--spacing-25, 4px);
-}
-
-.prototype-dashpage-impact-icon {
-  flex-shrink: 0;
-  color: var(--color-base--subtle, #54595d);
-}
-
-.prototype-dashpage-impact-metric {
-  color: var(--color-progressive, #36c);
-  font-weight: var(--font-weight-bold, 700);
-  min-width: 1.25em;
-}
 
 :deep(.dashboard-slot--mobile-primary .dashboard-module__body) {
   min-height: 3rem;
