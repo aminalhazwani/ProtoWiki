@@ -7,6 +7,7 @@ import DashboardModule from '@/components/DashboardModule.vue'
 import SpecialPageWrapper from '@/components/SpecialPageWrapper.vue'
 import HelpModule from './HelpModule.vue'
 import ImpactModule from './ImpactModule.vue'
+import type { MostViewedArticle } from './ImpactModule.vue'
 import MentorModule from './MentorModule.vue'
 
 definePage({
@@ -47,6 +48,59 @@ const IMPACT = {
   lastEdited: '5 months ago',
   longestStreak: '1 day',
 } as const
+
+const IMPACT_DESKTOP: {
+  totalEdits: number
+  thanksReceived: number
+  lastEdited: string
+  longestStreak: string
+  viewCount: string
+  sparklineData: number[]
+  recentActivityData: number[]
+  activityStartDate: string
+  activityEndDate: string
+  mostViewed: MostViewedArticle[]
+  viewAllEditsHref: string
+} = {
+  totalEdits: 52,
+  thanksReceived: 0,
+  lastEdited: '5 months ago',
+  longestStreak: '1 day',
+  viewCount: '10,754',
+  sparklineData: [
+    420, 390, 410, 430, 400, 380, 415, 440, 425, 405, 390, 420, 435, 410,
+    395, 430, 450, 420, 400, 415, 440, 425, 410, 395, 380, 400, 420, 410,
+    390, 405, 430, 415, 395, 380, 400, 420, 440, 410, 390, 380, 350, 360,
+  ],
+  recentActivityData: [
+    0, 0, 2, 0, 1, 0, 0, 3, 0, 0, 1, 0, 0, 0, 2, 0, 1, 0, 0, 0,
+    0, 1, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0,
+    1, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  ],
+  activityStartDate: 'Mar 17',
+  activityEndDate: 'May 15',
+  mostViewed: [
+    {
+      title: 'Bora Bora',
+      views: 4821,
+      sparklineData: [300, 320, 280, 350, 310, 290, 340, 360, 330, 300],
+      href: '#',
+    },
+    {
+      title: 'Wikipedia',
+      views: 3104,
+      sparklineData: [200, 210, 195, 220, 205, 215, 200, 210, 205, 195],
+      href: '#',
+    },
+    {
+      title: 'Atlantic Ocean',
+      views: 2187,
+      sparklineData: [150, 160, 145, 170, 155, 140, 160, 155, 145, 150],
+      href: '#',
+    },
+  ],
+  viewAllEditsHref: '#',
+}
 
 /** Shared across mobile + desktop for each matching module */
 const MODULE = {
@@ -126,6 +180,20 @@ const MODULE = {
             />
 
             <ImpactModule />
+
+            <ImpactModule
+              :total-edits="IMPACT_DESKTOP.totalEdits"
+              :thanks-received="IMPACT_DESKTOP.thanksReceived"
+              :last-edited="IMPACT_DESKTOP.lastEdited"
+              :longest-streak="IMPACT_DESKTOP.longestStreak"
+              :view-count="IMPACT_DESKTOP.viewCount"
+              :sparkline-data="IMPACT_DESKTOP.sparklineData"
+              :recent-activity-data="IMPACT_DESKTOP.recentActivityData"
+              :activity-start-date="IMPACT_DESKTOP.activityStartDate"
+              :activity-end-date="IMPACT_DESKTOP.activityEndDate"
+              :most-viewed="IMPACT_DESKTOP.mostViewed"
+              :view-all-edits-href="IMPACT_DESKTOP.viewAllEditsHref"
+            />
             <DashboardModule
               class="dashboard-slot--desktop-secondary"
               :title="MODULE.policiesTitle"
