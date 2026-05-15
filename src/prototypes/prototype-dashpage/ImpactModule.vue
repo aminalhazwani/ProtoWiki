@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { RouteLocationRaw } from 'vue-router'
 
 import DashboardModule from '@/components/DashboardModule.vue'
 
 interface Props {
+  to?: RouteLocationRaw
   /** Formatted total views, e.g. "10.8K" */
   viewCount?: string
   viewLabel?: string
@@ -14,6 +16,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  to: undefined,
   viewCount: undefined,
   viewLabel: 'Views on articles you\'ve edited',
   sparklineData: () => [],
@@ -51,7 +54,7 @@ const hasContent = computed(() => !!props.viewCount)
 </script>
 
 <template>
-  <DashboardModule title="Your impact">
+  <DashboardModule title="Your impact" :to="to" hide-cta>
     <template v-if="hasContent">
       <div class="impact-module__stat-row">
         <span class="impact-module__count">{{ viewCount }}</span>

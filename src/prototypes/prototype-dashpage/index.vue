@@ -89,6 +89,7 @@ const MODULE = {
             </DashboardModule>
 
             <ImpactModule
+              :to="HOME"
               :view-count="IMPACT.viewCount"
               :sparkline-data="[...IMPACT.sparklineData]"
               :last-edited="IMPACT.lastEdited"
