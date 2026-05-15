@@ -208,7 +208,7 @@ function trimmedTitle(): string {
   padding: 0.25rem 1rem;
   background-color: var(--background-color-progressive, #36c);
   color: var(--color-inverted, #fff);
-  font-size: 14px;
+  font-size: var(--font-size-small);
   font-weight: 700;
   text-align: center;
   border-radius: 2px;
@@ -238,67 +238,4 @@ function trimmedTitle(): string {
   min-width: 0;
 }
 
-.your-impact__metrics {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  gap: 0;
-}
-
-.your-impact__metric {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.25rem;
-  flex: 1;
-  min-width: 0;
-  padding: 0 0.75rem;
-}
-
-.your-impact__metric:first-child {
-  padding-left: 0;
-}
-
-.your-impact__metric:last-child {
-  padding-right: 0;
-}
-
-.your-impact__divider {
-  flex-shrink: 0;
-  width: 1px;
-  min-height: 2.5rem;
-  align-self: stretch;
-  background-color: var(--border-color-subtle, #a2a9b1);
-}
-
-.your-impact__value-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.your-impact__icon {
-  color: var(--color-base--subtle, #54595d);
-}
-
-.your-impact__value {
-  font-weight: 400;
-  line-height: 1.2;
-  color: var(--color-base, #202122);
-}
-
-.your-impact__value-link {
-  color: var(--color-progressive, #36c);
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.your-impact__value-link:hover {
-  text-decoration: underline;
-}
-
-.your-impact__label {
-  color: var(--color-base--subtle, #54595d);
-  flex-shrink: 0;
-}
 </style>
