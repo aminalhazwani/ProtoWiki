@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
+import { CdxIcon } from '@wikimedia/codex'
+import { cdxIconChart, cdxIconInfo, cdxIconUserTalk } from '@wikimedia/codex-icons'
 
 import DashboardModule from '@/components/DashboardModule.vue'
 
@@ -13,6 +15,8 @@ interface Props {
   sparklineData?: number[]
   lastEdited?: string
   longestStreak?: string
+  /** Thanks received count — shown in desktop empty state */
+  thanksReceived?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -22,6 +26,7 @@ const props = withDefaults(defineProps<Props>(), {
   sparklineData: () => [],
   lastEdited: undefined,
   longestStreak: undefined,
+  thanksReceived: 0,
 })
 
 const W = 300
@@ -51,11 +56,12 @@ const areaPath = computed(() => {
 })
 
 const hasContent = computed(() => !!props.viewCount)
+const isMobile = computed(() => props.to != null)
 </script>
 
 <template>
   <DashboardModule title="Your impact" :to="to" hide-cta>
-    <!-- Filled state: sparkline + metrics -->
+    <!-- Filled state -->
     <template v-if="hasContent">
       <div class="impact-module__stat-row">
         <span class="impact-module__count">{{ viewCount }}</span>
@@ -85,8 +91,8 @@ const hasContent = computed(() => !!props.viewCount)
       </div>
     </template>
 
-    <!-- Empty state: no edits yet -->
-    <template v-else>
+    <!-- Mobile empty state -->
+    <template v-else-if="isMobile">
       <div class="impact-module__empty-hero">
         <img
           src="https://en.wikipedia.org/w/extensions/GrowthExperiments/images/intro-heart-article.png?269e6"
@@ -102,10 +108,51 @@ const hasContent = computed(() => !!props.viewCount)
         Start with a few <strong>suggested edits</strong>, then see how many people are viewing your contributions here.
       </p>
     </template>
+
+    <!-- Desktop empty state -->
+    <template v-else>
+      <div class="impact-module__desktop-stats">
+        <div class="impact-module__desktop-stat">
+          <div class="impact-module__desktop-stat-value-row">
+            <CdxIcon :icon="cdxIconUserTalk" size="small" class="impact-module__desktop-stat-icon" />
+            <span class="impact-module__desktop-stat-value">{{ thanksReceived }}</span>
+          </div>
+          <div class="impact-module__desktop-stat-label-row">
+            <span class="impact-module__desktop-stat-label">Thanks received</span>
+            <CdxIcon :icon="cdxIconInfo" size="small" class="impact-module__desktop-info-icon" />
+          </div>
+        </div>
+        <div class="impact-module__desktop-stat-divider" />
+        <div class="impact-module__desktop-stat">
+          <div class="impact-module__desktop-stat-value-row">
+            <CdxIcon :icon="cdxIconChart" size="small" class="impact-module__desktop-stat-icon" />
+            <span class="impact-module__desktop-stat-value">–</span>
+          </div>
+          <div class="impact-module__desktop-stat-label-row">
+            <span class="impact-module__desktop-stat-label">Longest streak</span>
+            <CdxIcon :icon="cdxIconInfo" size="small" class="impact-module__desktop-info-icon" />
+          </div>
+        </div>
+      </div>
+
+      <div class="impact-module__desktop-empty-body">
+        <img
+          src="https://en.wikipedia.org/w/extensions/GrowthExperiments/images/intro-heart-article.png?269e6"
+          alt=""
+          class="impact-module__desktop-empty-image"
+        />
+        <p class="impact-module__desktop-empty-heading">0 edits to articles so far</p>
+        <p class="impact-module__desktop-empty-subheading">Help extend free knowledge to the world by editing topics that matter most to you.</p>
+      </div>
+      <p class="impact-module__empty-footer">
+        Start with a few <strong>suggested edits</strong>, then see how many people are viewing your contributions here.
+      </p>
+    </template>
   </DashboardModule>
 </template>
 
 <style scoped>
+/* ── Filled state ─────────────────────────────────── */
 .impact-module__stat-row {
   display: flex;
   align-items: baseline;
@@ -163,6 +210,7 @@ const hasContent = computed(() => !!props.viewCount)
   font-weight: var(--font-weight-bold, 700);
 }
 
+/* ── Mobile empty state ───────────────────────────── */
 .impact-module__empty-hero {
   display: flex;
   align-items: center;
@@ -203,5 +251,91 @@ const hasContent = computed(() => !!props.viewCount)
   font-size: var(--font-size-small);
   line-height: var(--line-height-small);
   color: var(--color-subtle, #54595d);
+}
+
+/* ── Desktop empty state ──────────────────────────── */
+.impact-module__desktop-stats {
+  display: flex;
+  align-items: stretch;
+  border-radius: 2px;
+  margin-bottom: var(--spacing-100, 16px);
+  overflow: hidden;
+}
+
+.impact-module__desktop-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-25, 4px);
+}
+
+.impact-module__desktop-stat-value-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-50, 8px);
+}
+
+.impact-module__desktop-stat-icon {
+  color: var(--color-subtle);
+  flex-shrink: 0;
+}
+
+.impact-module__desktop-stat-value {
+  font-weight: var(--font-weight-bold, 700);
+  line-height: 1;
+  color: var(--color-base, #202122);
+}
+
+.impact-module__desktop-stat-label-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-50, 8px);
+}
+
+.impact-module__desktop-stat-label {
+  font-size: var(--font-size-small);
+  color: var(--color-base, #202122);
+}
+
+.impact-module__desktop-info-icon {
+  color: var(--color-base--subtle, #54595d);
+  flex-shrink: 0;
+}
+
+.impact-module__desktop-empty-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--spacing-50, 8px);
+  margin-bottom: var(--spacing-100, 16px);
+}
+
+.impact-module__desktop-empty-image {
+  width: 140px;
+  height: auto;
+  margin-bottom: var(--spacing-25, 4px);
+}
+
+.impact-module__desktop-empty-heading {
+  margin: 0;
+  font-size: var(--font-size-xx-large);
+  font-weight: var(--font-weight-bold, 700);
+  line-height: var(--line-height-small);
+  color: var(--color-base, #202122);
+}
+
+.impact-module__desktop-empty-subheading {
+  margin: 0;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold, 700);
+  line-height: var(--line-height-small);
+  color: var(--color-base, #202122);
+}
+
+.impact-module__desktop-divider {
+  border: none;
+  border-top: 1px solid var(--border-color-subtle, #a2a9b1);
+  margin: 0 0 var(--spacing-75, 12px);
 }
 </style>

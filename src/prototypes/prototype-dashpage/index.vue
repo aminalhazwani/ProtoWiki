@@ -69,6 +69,15 @@ const MODULE = {
           </template>
 
           <template #mobile>
+            <DashboardModule
+              class="dashboard-slot--mobile-primary"
+              :to="HOME"
+              :title="MODULE.thankTitle"
+              cta-label="Open module"
+            >
+              <p class="prototype-dashpage-placeholder">{{ MODULE.thankBody }}</p>
+            </DashboardModule>
+
             <MentorModule
               :mentor-name="MENTOR.name"
               :edit-count="MENTOR.editCount"
@@ -78,15 +87,6 @@ const MODULE = {
               :learn-more-href="MENTOR.learnMoreHref"
               :conversations-href="MENTOR.conversationsHref"
             />
-
-            <DashboardModule
-              class="dashboard-slot--mobile-primary"
-              :to="HOME"
-              :title="MODULE.thankTitle"
-              cta-label="Open module"
-            >
-              <p class="prototype-dashpage-placeholder">{{ MODULE.thankBody }}</p>
-            </DashboardModule>
 
             <ImpactModule :to="HOME" />
 
