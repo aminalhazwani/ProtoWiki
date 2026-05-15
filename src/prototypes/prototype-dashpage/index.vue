@@ -7,6 +7,7 @@ import ChromeWrapper from '@/components/ChromeWrapper.vue'
 import Dashboard from '@/components/Dashboard.vue'
 import DashboardModule from '@/components/DashboardModule.vue'
 import SpecialPageWrapper from '@/components/SpecialPageWrapper.vue'
+import MentorModule from './MentorModule.vue'
 
 definePage({
   meta: {
@@ -17,6 +18,15 @@ definePage({
 
 /** Gallery / app home (file-based route `/`). */
 const HOME = '/'
+
+const MENTOR = {
+  name: 'ARoseWolf',
+  editCount: 12596,
+  lastActiveDaysAgo: 451,
+  note: 'This experienced user knows you\'re new and can help you with editing.',
+  learnMoreHref: '#',
+  conversationsHref: '#',
+} as const
 
 /** Shared across mobile + desktop for each matching module */
 const MODULE = {
@@ -40,6 +50,16 @@ const MODULE = {
           </template>
 
           <template #mobile>
+            <MentorModule
+              :mentor-name="MENTOR.name"
+              :edit-count="MENTOR.editCount"
+              :last-active-days-ago="MENTOR.lastActiveDaysAgo"
+              :mentor-note="MENTOR.note"
+              :to="HOME"
+              :learn-more-href="MENTOR.learnMoreHref"
+              :conversations-href="MENTOR.conversationsHref"
+            />
+
             <DashboardModule
               class="dashboard-slot--mobile-primary"
               :to="HOME"
@@ -88,6 +108,15 @@ const MODULE = {
           </template>
 
           <template #sidebar>
+            <MentorModule
+              :mentor-name="MENTOR.name"
+              :edit-count="MENTOR.editCount"
+              :last-active-days-ago="MENTOR.lastActiveDaysAgo"
+              :mentor-note="MENTOR.note"
+              :learn-more-href="MENTOR.learnMoreHref"
+              :conversations-href="MENTOR.conversationsHref"
+            />
+
             <DashboardModule
               class="dashboard-slot--desktop-sidebar"
               :title="MODULE.impactTitle"
