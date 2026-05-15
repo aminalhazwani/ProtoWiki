@@ -7,6 +7,7 @@ import ChromeWrapper from '@/components/ChromeWrapper.vue'
 import Dashboard from '@/components/Dashboard.vue'
 import DashboardModule from '@/components/DashboardModule.vue'
 import SpecialPageWrapper from '@/components/SpecialPageWrapper.vue'
+import HelpModule from './HelpModule.vue'
 import MentorModule from './MentorModule.vue'
 
 definePage({
@@ -18,6 +19,15 @@ definePage({
 
 /** Gallery / app home (file-based route `/`). */
 const HOME = '/'
+
+const HELP_LINKS = [
+  { label: 'How to edit a page', href: '#' },
+  { label: 'How to add an image', href: '#' },
+  { label: 'How to edit a citation', href: '#' },
+  { label: 'Simplified Manual of Style', href: '#' },
+  { label: 'How to write a good article', href: '#' },
+  { label: 'How to create a new article', href: '#' },
+]
 
 const MENTOR = {
   name: 'ARoseWolf',
@@ -99,6 +109,8 @@ const MODULE = {
             >
               <p class="prototype-dashpage-placeholder">{{ MODULE.policiesBody }}</p>
             </DashboardModule>
+
+            <HelpModule compact />
           </template>
 
           <template #primary>
@@ -148,6 +160,8 @@ const MODULE = {
             >
               <p class="prototype-dashpage-placeholder">{{ MODULE.policiesBody }}</p>
             </DashboardModule>
+
+            <HelpModule :help-links="HELP_LINKS" view-more-href="#" />
           </template>
         </Dashboard>
       </div>
