@@ -37,6 +37,17 @@ const MENTOR = {
   conversationsHref: '#',
 } as const
 
+const IMPACT = {
+  viewCount: '10.8K',
+  sparklineData: [
+    420, 390, 410, 430, 400, 380, 415, 440, 425, 405, 390, 420, 435, 410,
+    395, 430, 450, 420, 400, 415, 440, 425, 410, 395, 380, 400, 420, 410,
+    390, 405, 430, 415, 395, 380, 400, 420, 440, 410, 390, 380, 350, 360,
+  ],
+  lastEdited: '5 months ago',
+  longestStreak: '1 day',
+} as const
+
 /** Shared across mobile + desktop for each matching module */
 const MODULE = {
   thankTitle: 'Contribute',
@@ -77,7 +88,12 @@ const MODULE = {
               <p class="prototype-dashpage-placeholder">{{ MODULE.thankBody }}</p>
             </DashboardModule>
 
-            <ImpactModule :to="HOME" />
+            <ImpactModule
+              :view-count="IMPACT.viewCount"
+              :sparkline-data="[...IMPACT.sparklineData]"
+              :last-edited="IMPACT.lastEdited"
+              :longest-streak="IMPACT.longestStreak"
+            />
 
             <DashboardModule
               :to="HOME"
