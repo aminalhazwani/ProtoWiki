@@ -88,6 +88,8 @@ const MODULE = {
               <p class="prototype-dashpage-placeholder">{{ MODULE.thankBody }}</p>
             </DashboardModule>
 
+            <ImpactModule :to="HOME" />
+
             <ImpactModule
               :to="HOME"
               :view-count="IMPACT.viewCount"

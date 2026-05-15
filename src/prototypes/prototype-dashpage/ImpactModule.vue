@@ -55,6 +55,7 @@ const hasContent = computed(() => !!props.viewCount)
 
 <template>
   <DashboardModule title="Your impact" :to="to" hide-cta>
+    <!-- Filled state: sparkline + metrics -->
     <template v-if="hasContent">
       <div class="impact-module__stat-row">
         <span class="impact-module__count">{{ viewCount }}</span>
@@ -82,6 +83,24 @@ const hasContent = computed(() => !!props.viewCount)
           <span class="impact-module__metric-value">{{ longestStreak }}</span>
         </div>
       </div>
+    </template>
+
+    <!-- Empty state: no edits yet -->
+    <template v-else>
+      <div class="impact-module__empty-hero">
+        <img
+          src="https://en.wikipedia.org/w/extensions/GrowthExperiments/images/intro-heart-article.png?269e6"
+          alt=""
+          class="impact-module__empty-image"
+        />
+        <div class="impact-module__empty-text">
+          <p class="impact-module__empty-heading">0 edits to articles so far</p>
+          <p class="impact-module__empty-body">Help extend free knowledge to the world by editing topics that matter most to you.</p>
+        </div>
+      </div>
+      <p class="impact-module__empty-footer">
+        Start with a few <strong>suggested edits</strong>, then see how many people are viewing your contributions here.
+      </p>
     </template>
   </DashboardModule>
 </template>
@@ -142,5 +161,47 @@ const hasContent = computed(() => !!props.viewCount)
 
 .impact-module__metric-value {
   font-weight: var(--font-weight-bold, 700);
+}
+
+.impact-module__empty-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-100, 16px);
+  margin-bottom: var(--spacing-100, 16px);
+}
+
+.impact-module__empty-image {
+  flex-shrink: 0;
+  width: 72px;
+  height: auto;
+}
+
+.impact-module__empty-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-25, 4px);
+  min-width: 0;
+}
+
+.impact-module__empty-heading {
+  margin: 0;
+  font-size: var(--font-size-medium);
+  font-weight: var(--font-weight-bold, 700);
+  line-height: var(--line-height-small);
+  color: var(--color-base, #202122);
+}
+
+.impact-module__empty-body {
+  margin: 0;
+  font-size: var(--font-size-medium);
+  line-height: var(--line-height-medium);
+  color: var(--color-base, #202122);
+}
+
+.impact-module__empty-footer {
+  margin: 0;
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+  color: var(--color-subtle, #54595d);
 }
 </style>
