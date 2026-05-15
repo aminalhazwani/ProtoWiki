@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import type { RouteLocationRaw } from 'vue-router'
-import { CdxIcon } from '@wikimedia/codex'
+import { CdxButton, CdxIcon } from '@wikimedia/codex'
 import { cdxIconArrowNext } from '@wikimedia/codex-icons'
 
 interface Props {
@@ -51,7 +51,9 @@ function trimmedTitle(): string {
   >
     <div v-if="trimmedTitle()" class="mobile-card__header">
       <span class="mobile-card__title">{{ trimmedTitle() }}</span>
-      <CdxIcon :icon="cdxIconArrowNext" size="medium" class="mobile-card__arrow" />
+      <CdxButton weight="quiet" :icon-only="true" aria-label="Open" tabindex="-1">
+          <CdxIcon :icon="cdxIconArrowNext" />
+        </CdxButton>
     </div>
     <div class="mobile-card__content mobile-card__content--preview dashboard-module__body">
       <slot />
@@ -70,7 +72,9 @@ function trimmedTitle(): string {
   >
     <div v-if="trimmedTitle()" class="mobile-card__header">
       <span class="mobile-card__title">{{ trimmedTitle() }}</span>
-      <CdxIcon :icon="cdxIconArrowNext" size="medium" class="mobile-card__arrow" />
+      <CdxButton weight="quiet" :icon-only="true" aria-label="Open" class="mobile-card__arrow" tabindex="-1">
+          <CdxIcon :icon="cdxIconArrowNext" />
+        </CdxButton>
     </div>
     <div class="mobile-card__content mobile-card__content--preview dashboard-module__body">
       <slot />
@@ -129,26 +133,15 @@ function trimmedTitle(): string {
 
 .mobile-card__title {
   font-weight: bold;
-  font-size: 16px;
-}
-
-.mobile-card__arrow {
-  color: var(--color-base--subtle, #54595d);
-  flex-shrink: 0;
-  padding: 0;
-  transform: scale(1.4);
-}
-
-.mobile-card__arrow .cdx-icon {
-  padding: 0;
+  font-size: var(--font-size-medium);
 }
 
 .mobile-card__content {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
-  line-height: 1.4;
-  font-size: 14px;
+  line-height: var(line-height-medium);
+  font-size: var(--font-size-medium);
 }
 
 .mobile-card__content--stacked {
@@ -231,10 +224,10 @@ function trimmedTitle(): string {
 }
 
 .sidebar-card__title {
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 var(--spacing-75) 0;
   padding: 0;
-  font-weight: bold;
-  font-size: 18px;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-medium);
 }
 
 .sidebar-card .cdx-label {
