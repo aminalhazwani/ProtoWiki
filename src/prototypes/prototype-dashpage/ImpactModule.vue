@@ -530,11 +530,15 @@ const recentEditCount = computed(() =>
   flex-direction: column;
 }
 
+.impact-module__most-viewed-item:nth-child(even) {
+  background-color: var(--background-color-interactive-subtle, #eaf3ff);
+}
+
 .impact-module__most-viewed-item {
   display: flex;
   align-items: center;
   gap: var(--spacing-50, 8px);
-  padding: var(--spacing-25, 4px) 0;
+  padding: var(--spacing-25, 4px);
 }
 
 .impact-module__most-viewed-thumb {
@@ -542,7 +546,9 @@ const recentEditCount = computed(() =>
   width: 40px;
   height: 40px;
   overflow: hidden;
-  background-color: var(--background-color-interactive, #eaecf0);
+  background-color: var(--background-color-neutral);
+  border: 1px solid var(--border-color-subtle);
+  border-radius: 2px;
 }
 
 .impact-module__most-viewed-thumb img {
