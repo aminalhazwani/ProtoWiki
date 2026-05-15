@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { RouteLocationRaw } from 'vue-router'
-import { CdxIcon } from '@wikimedia/codex'
-import { cdxIconUserAnonymous } from '@wikimedia/codex-icons'
+import { CdxButton, CdxIcon } from '@wikimedia/codex'
+import { cdxIconUserRights } from '@wikimedia/codex-icons'
 
 import DashboardModule from '@/components/DashboardModule.vue'
 
@@ -32,12 +32,12 @@ const props = withDefaults(defineProps<Props>(), {
         We've assigned you an experienced editor to answer your questions about editing.
       </p>
       <div class="mentor-module__user">
-        <CdxIcon :icon="cdxIconUserAnonymous" size="medium" class="mentor-module__avatar" />
+        <CdxIcon :icon="cdxIconUserRights" size="medium" class="mentor-module__avatar" />
         <div class="mentor-module__user-info">
           <span class="mentor-module__name">{{ props.mentorName }}</span>
-          <span class="mentor-module__meta">Active {{ props.lastActiveDaysAgo }} days ago</span>
         </div>
       </div>
+      <span class="mentor-module__meta">Active {{ props.lastActiveDaysAgo }} days ago</span>
     </template>
 
     <!-- Desktop: full detail inside static sidebar card -->
@@ -51,39 +51,43 @@ const props = withDefaults(defineProps<Props>(), {
         >Learn more about mentors.</a>
       </p>
       <div class="mentor-module__user">
-        <CdxIcon :icon="cdxIconUserAnonymous" size="medium" class="mentor-module__avatar" />
+        <CdxIcon :icon="cdxIconUserRights" size="medium" class="mentor-module__avatar" />
         <div class="mentor-module__user-info">
           <span class="mentor-module__name mentor-module__name--progressive">{{ props.mentorName }}</span>
-          <span class="mentor-module__meta">
-            <span v-if="props.editCount != null">{{ props.editCount.toLocaleString() }} edits · </span>Active {{ props.lastActiveDaysAgo }} days ago
-          </span>
         </div>
       </div>
+      <p class="mentor-module__meta">
+        <span v-if="props.editCount != null">{{ props.editCount.toLocaleString() }} edits · </span>Active {{ props.lastActiveDaysAgo }} days ago
+      </p>
       <blockquote v-if="props.mentorNote" class="mentor-module__note">
         {{ props.mentorNote }}
       </blockquote>
-      <button class="mentor-module__ask-btn">Ask your mentor a question about editing</button>
-      <a
+      <CdxButton class="mentor-module__ask-btn" weight="normal">Ask your mentor a question about editing</CdxButton>
+      <p
         v-if="props.conversationsHref"
         :href="props.conversationsHref"
-        class="mentor-module__link mentor-module__conversations"
-      >View your mentor's other conversations</a>
+        class="mentor-module__conversations">
+        <a class="mentor-module__link">View your mentor's other conversations</a>
+      </p>
     </template>
   </DashboardModule>
 </template>
 
 <style scoped>
 .mentor-module__intro {
-  margin: 0 0 0.75rem;
-  font-size: 14px;
-  line-height: 1.4;
-  color: var(--color-base, #202122);
+  line-height: var(--line-height-medium);
+}
+
+@media (min-width: 641px) {
+  .mentor-module__intro {
+    line-height: var(--line-height-small);
+  }
 }
 
 .mentor-module__user {
   display: flex;
   align-items: center;
-  gap: var(--spacing-75, 12px);
+  gap: var(--spacing-100, 16px);
 }
 
 .mentor-module__avatar {
@@ -100,62 +104,51 @@ const props = withDefaults(defineProps<Props>(), {
   min-width: 0;
 }
 
-.mentor-module__name {
-  font-size: 14px;
-  font-weight: var(--font-weight-bold, 700);
-  color: var(--color-base, #202122);
-}
-
 .mentor-module__name--progressive {
+  font-size: var(--font-size-large);
   color: var(--color-progressive, #36c);
 }
 
 .mentor-module__meta {
-  font-size: 13px;
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
   color: var(--color-base--subtle, #54595d);
 }
 
+@media (min-width: 641px) {
+  .mentor-module__meta {
+    font-size: var(--font-size-x-small);
+  }
+}
+
 .mentor-module__note {
-  margin: 0.75rem 0 0;
-  padding: 0.25rem 0 0.25rem 0.75rem;
+  margin: var(--spacing-75) 0 0;
+  padding: 0.25rem 0 0.25rem var(--spacing-75);
   border-left: 4px solid var(--border-color-subtle, #a2a9b1);
-  font-size: 14px;
-  line-height: 1.4;
-  color: var(--color-base, #202122);
+  font-family: var(--font-family-system-sans);
+}
+
+@media (min-width: 641px) {
+  .mentor-module__note {
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
+  }
 }
 
 .mentor-module__ask-btn {
-  display: block;
-  width: 100%;
-  margin-top: 0.75rem;
-  padding: 0.4rem 1rem;
-  background-color: transparent;
-  color: var(--color-base, #202122);
-  font-size: 14px;
-  font-weight: var(--font-weight-bold, 700);
-  text-align: center;
-  border: 1px solid var(--border-color-base, #a2a9b1);
-  border-radius: 2px;
-  cursor: pointer;
-  box-sizing: border-box;
+  margin: var(--spacing-75) 0;
+  white-space: wrap;
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
 }
-
-.mentor-module__ask-btn:hover {
-  background-color: var(--background-color-interactive, #eaecf0);
-}
-
-.mentor-module__link {
-  color: var(--color-progressive, #36c);
-  text-decoration: none;
-}
-
-.mentor-module__link:hover {
-  text-decoration: underline;
-}
-
 .mentor-module__conversations {
-  display: block;
-  margin-top: 0.5rem;
-  font-size: 14px;
+  margin: 0;
+  line-height: var(--line-height-medium);
+}
+
+@media (min-width: 641px) {
+  .mentor-module__conversations {
+    line-height: var(--line-height-small);
+  }
 }
 </style>
