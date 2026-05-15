@@ -348,7 +348,6 @@ const recentEditCount = computed(() =>
   display: flex;
   align-items: stretch;
   background-color: var(--background-color-interactive-subtle, #eaf3ff);
-  border-radius: 2px;
   margin-bottom: var(--spacing-100, 16px);
   overflow: hidden;
 }
@@ -356,6 +355,7 @@ const recentEditCount = computed(() =>
 .impact-module__desktop-stats--grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  background-color: var(--background-color-progressive-subtle);
 }
 
 .impact-module__desktop-stat {
@@ -363,6 +363,7 @@ const recentEditCount = computed(() =>
   flex-direction: column;
   gap: var(--spacing-25, 4px);
   padding: var(--spacing-75, 12px);
+  flex-grow: 1;
 }
 
 .impact-module__desktop-stat--border-left {
@@ -386,7 +387,7 @@ const recentEditCount = computed(() =>
 }
 
 .impact-module__desktop-stat-icon {
-  color: var(--color-base, #202122);
+  color: var(--color-subtle);
   flex-shrink: 0;
 }
 
@@ -408,7 +409,8 @@ const recentEditCount = computed(() =>
 
 .impact-module__desktop-stat-label {
   font-size: var(--font-size-small);
-  color: var(--color-base, #202122);
+  color: var(--color-subtle);
+  flex-grow: 1;
 }
 
 .impact-module__desktop-info-icon {
@@ -467,8 +469,8 @@ const recentEditCount = computed(() =>
 
 .impact-module__activity-chart-row {
   display: flex;
-  align-items: flex-end;
-  gap: var(--spacing-75, 12px);
+  align-items: flex-start;
+  gap: var(--spacing-50, 8px);
 }
 
 .impact-module__activity-count {
@@ -482,6 +484,7 @@ const recentEditCount = computed(() =>
   font-size: var(--font-size-xx-large);
   font-weight: var(--font-weight-bold, 700);
   color: var(--color-base, #202122);
+  margin-bottom: var(--spacing-50);
 }
 
 .impact-module__activity-count-label {
@@ -509,8 +512,7 @@ const recentEditCount = computed(() =>
 
 /* ── Desktop filled: most viewed ─────────────────── */
 .impact-module__most-viewed-title {
-  margin: var(--spacing-75, 12px) 0 var(--spacing-50, 8px);
-  font-size: var(--font-size-small);
+  margin: var(--spacing-50, 8px) 0;
   font-weight: var(--font-weight-bold, 700);
   color: var(--color-base, #202122);
 }
@@ -523,17 +525,15 @@ const recentEditCount = computed(() =>
 .impact-module__most-viewed-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-75, 12px);
-  padding: var(--spacing-75, 12px) 0;
-  border-top: 1px solid var(--border-color-subtle, #a2a9b1);
+  gap: var(--spacing-50, 8px);
+  padding: var(--spacing-25, 4px) 0;
 }
 
 .impact-module__most-viewed-thumb {
   flex-shrink: 0;
-  width: 54px;
-  height: 54px;
+  width: 40px;
+  height: 40px;
   overflow: hidden;
-  border-radius: 2px;
   background-color: var(--background-color-interactive, #eaecf0);
 }
 
@@ -559,9 +559,9 @@ const recentEditCount = computed(() =>
 .impact-module__most-viewed-views-col {
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-25, 4px);
 }
 
 .impact-module__most-viewed-count {
@@ -572,16 +572,18 @@ const recentEditCount = computed(() =>
 
 .impact-module__mini-sparkline {
   display: block;
-  width: 48px;
-  height: 20px;
+  width: 20px;
+  height: 10px;
+}
+
+.impact-module__mini-sparkline > path {
+  stroke-width: 3px;
 }
 
 .impact-module__view-all {
   display: block;
   margin-top: var(--spacing-75, 12px);
-  font-size: var(--font-size-small);
-  color: var(--color-progressive, #36c);
-  text-decoration: none;
+  font-weight: var(--font-weight-bold);
 }
 
 .impact-module__view-all:hover {
