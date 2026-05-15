@@ -185,31 +185,33 @@ const recentEditCount = computed(() =>
       <!-- Recent activity bar chart -->
       <div class="impact-module__activity">
         <p class="impact-module__activity-title">Your recent activity (last 60 days)</p>
-        <div class="impact-module__activity-chart-row">
-          <div class="impact-module__activity-count">
+        <div class="impact-module__activity-body">
+          <div class="impact-module__activity-left">
             <span class="impact-module__activity-count-value">{{ recentEditCount }}</span>
             <span class="impact-module__activity-count-label">Edits</span>
           </div>
-          <svg
-            class="impact-module__activity-chart"
-            :viewBox="`0 0 ${BAR_W} ${BAR_H}`"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <rect
-              v-for="(bar, i) in activityBars"
-              :key="i"
-              :x="bar.x"
-              :y="bar.y"
-              :width="bar.width"
-              :height="bar.height"
-              class="impact-module__activity-bar"
-            />
-          </svg>
-        </div>
-        <div v-if="activityStartDate || activityEndDate" class="impact-module__activity-dates">
-          <span>{{ activityStartDate }}</span>
-          <span>{{ activityEndDate }}</span>
+          <div class="impact-module__activity-right">
+            <svg
+              class="impact-module__activity-chart"
+              :viewBox="`0 0 ${BAR_W} ${BAR_H}`"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <rect
+                v-for="(bar, i) in activityBars"
+                :key="i"
+                :x="bar.x"
+                :y="bar.y"
+                :width="bar.width"
+                :height="bar.height"
+                class="impact-module__activity-bar"
+              />
+            </svg>
+            <div v-if="activityStartDate || activityEndDate" class="impact-module__activity-dates">
+              <span>{{ activityStartDate }}</span>
+              <span>{{ activityEndDate }}</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -467,35 +469,42 @@ const recentEditCount = computed(() =>
   color: var(--color-base, #202122);
 }
 
-.impact-module__activity-chart-row {
+.impact-module__activity-body {
   display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-50, 8px);
+  align-items: end;
+  gap: var(--spacing-100, 16px);
 }
 
-.impact-module__activity-count {
+.impact-module__activity-left {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  line-height: 1;
 }
 
 .impact-module__activity-count-value {
   font-size: var(--font-size-xx-large);
   font-weight: var(--font-weight-bold, 700);
   color: var(--color-base, #202122);
-  margin-bottom: var(--spacing-50);
+  line-height: 1;
 }
 
 .impact-module__activity-count-label {
   font-size: var(--font-size-small);
-  color: var(--color-base, #202122);
+  color: var(--color-base--subtle, #54595d);
+}
+
+.impact-module__activity-right {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .impact-module__activity-chart {
   display: block;
-  flex: 1;
+  width: 100%;
   height: 32px;
+  flex: 1;
 }
 
 .impact-module__activity-bar {
@@ -505,14 +514,13 @@ const recentEditCount = computed(() =>
 .impact-module__activity-dates {
   display: flex;
   justify-content: space-between;
-  font-size: var(--font-size-x-small);
-  color: var(--color-base--subtle, #54595d);
-  margin-top: var(--spacing-25, 4px);
+  font-size: var(--font-size-small);
+  color: var(--color-subtle, #54595d);
 }
 
 /* ── Desktop filled: most viewed ─────────────────── */
 .impact-module__most-viewed-title {
-  margin: var(--spacing-50, 8px) 0;
+  margin: var(--spacing-100, 16px) 0;
   font-weight: var(--font-weight-bold, 700);
   color: var(--color-base, #202122);
 }
